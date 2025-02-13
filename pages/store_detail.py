@@ -2,20 +2,14 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+from store_data import chart_info
 
-# 한글 폰트 설정 (Mac: AppleGothic, Windows: Malgun Gothic, Linux: NanumGothic)
-plt.rc('font', family='AppleGothic')  # Mac 사용자의 경우
-# plt.rc('font', family='Malgun Gothic')  # Windows 사용자의 경우
-# plt.rc('font', family='NanumGothic')  # 리눅스 사용자의 경우
 
-# 마이너스 폰트 깨짐 방지
-plt.rcParams['axes.unicode_minus'] = False
+# 한글 폰트 설정
+plt.rc('font', family='AppleGothic')
+plt.rcParams['axes.unicode_minus'] = False  # 마이너스 폰트 깨짐 방지
 
-st.set_page_config(
-    page_title="매장 상세 분석",
-    page_icon="📊",
-)
-
+st.set_page_config(page_title="매장 상세 분석", page_icon="📊")
 st.title("📊 스타벅스 매장 상세 분석")
 
 # 선택된 매장 정보 가져오기
@@ -26,41 +20,32 @@ if "selected_store" not in st.session_state:
 store_name = st.session_state.selected_store
 st.subheader(f"🏪 {store_name}")
 
-# 차트별 제목
-chart_titles = ["외향형", "내향형", "수다형", "카공형"]
+# 랜덤 점수 생성
+def generate_random_scores():
+    return np.array([random.randint(1, 10) for _ in range(6)])
 
-# 각 차트별 다른 레이블
-labels_list = [
-    ["유동인구", "상권 크기", "상점 수", "소비자 수", "브랜드 인지도", "경제력"],
-    ["대중교통", "도보 접근성", "차량 접근성", "주차 가능성", "혼잡도", "거리"],
-    ["경쟁 매장 수", "가격 경쟁력", "서비스 품질", "고객 충성도", "리뷰 점수", "광고 효과"],
-    ["직원 친절도", "청결도", "메뉴 다양성", "매장 분위기", "좌석 수", "WiFi 속도"]
-]
+# 레이더 차트 그리기 함수
+def plot_radar_chart(title, labels, scores, store_name, color):
+    angles = np.linspace(0, 2 * np.pi, len(labels) + 1)
+    scores = np.append(scores, scores[0])  # 닫힌 육각형 형성
 
-# 4개의 차트 데이터 생성 및 점수 랜덤 부여
-all_scores = [np.array([random.randint(1, 10) for _ in range(6)]) for _ in range(4)]
-angles = np.linspace(0, 2 * np.pi, 7)
+    fig, ax = plt.subplots(figsize=(5, 5), subplot_kw={'projection': 'polar'})
+    ax.plot(angles, scores, 'o-', linewidth=2, label=store_name, color=color)
+    ax.fill(angles, scores, alpha=0.3, color=color)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(labels)
+    # ax.legend(loc="upper right")
 
-# 2x2 차트 레이아웃 생성
+    return fig
+
+# 2x2 차트 레이아웃 설정
 cols = st.columns(2)
+all_scores = [generate_random_scores() for _ in chart_info]
 
-for i in range(4):
-    with cols[i % 2]:  # 2열로 배치
-        # st.subheader(chart_titles[i])
-        st.markdown(f"<h3 style='text-align: center;'>{chart_titles[i]}</h3>", unsafe_allow_html=True)
-
-        fig, ax = plt.subplots(figsize=(5, 5), subplot_kw={'projection': 'polar'})
-        scores = np.append(all_scores[i], all_scores[i][0])  # 닫힌 육각형
-        ax.plot(angles, scores, 'o-', linewidth=2, label=chart_titles[i])
-        ax.fill(angles, scores, alpha=0.3)
-
-        # 차트별 다른 레이블 적용
-        ax.set_xticks(angles[:-1])
-        ax.set_xticklabels(labels_list[i])
-
-        # 차트 내에 각각의 제목 형성
-        # ax.set_title(chart_titles[i])
-
+for i, (title, labels) in enumerate(chart_info):
+    with cols[i % 2]:
+        st.markdown(f"<h3 style='text-align: center;'>{title}</h3>", unsafe_allow_html=True)
+        fig = plot_radar_chart(title, labels, all_scores[i], store_name, "blue")
         st.pyplot(fig)
 
 # 뒤로 가기 버튼
