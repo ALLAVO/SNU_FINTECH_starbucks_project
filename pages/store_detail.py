@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import random
 from store_data import chart_info
 
-
 # 한글 폰트 설정
 plt.rc('font', family='AppleGothic')
 plt.rcParams['axes.unicode_minus'] = False  # 마이너스 폰트 깨짐 방지
