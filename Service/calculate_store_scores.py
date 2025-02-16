@@ -35,7 +35,7 @@ for csv_file in csv_files:
 
     # 📌 수다형 또는 카공형 등에 따라 초기 Theme 스코어 및 카운트 불러오기
     if "수다형" in file_name:
-        theme_scores = st.theme_scores.copy()
+        theme_scores = st.수다형_theme_scores.copy()
         theme_review_counts = st.수다형_theme_review_counts.copy()
     elif "카공형" in file_name:
         theme_scores = st.카공형_theme_scores.copy()

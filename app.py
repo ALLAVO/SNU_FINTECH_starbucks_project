@@ -11,6 +11,7 @@ csv_file_path = "data/starbucks_seoul_data.csv"
 df = pd.read_csv(csv_file_path)
 
 # 추가 CSV 파일 로드 및 매장 유형 매칭
+
 csv_files = {
     "대학가": "data/스타벅스_대학가.csv",
     "병원": "data/스타벅스_병원.csv",
