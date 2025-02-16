@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import random
 import matplotlib.pyplot as plt
 import os
 from store_data import chart_info
+from modules.score_utils import get_scores_from_all_csv  # 모듈 불러오기
+
 
 # 📌 CSV 데이터 로드
 csv_file_path = "data/starbucks_seoul_data.csv"
@@ -138,11 +139,6 @@ with tab2:
     if selected_store_1 and selected_store_2:
         st.subheader(f"📊 {selected_store_1} vs {selected_store_2}")
 
-        # 📌 4개 테마에 대한 데이터 생성 (각 매장별)
-        all_scores_1 = [np.array([random.randint(1, 10) for _ in range(6)]) for _ in range(4)]
-        all_scores_2 = [np.array([random.randint(1, 10) for _ in range(6)]) for _ in range(4)]
-        angles = np.linspace(0, 2 * np.pi, 7)
-
         # 📌 2x2 차트 레이아웃 생성
         cols = st.columns(2)
 
@@ -151,15 +147,21 @@ with tab2:
                 # 📌 차트 제목 중앙 정렬
                 st.markdown(f"<h3 style='text-align: center;'>{title}</h3>", unsafe_allow_html=True)
 
+                # 유형별 키워드를 파일명에서 찾음
+                file_name_keyword = title
+
+                all_scores_1 = get_scores_from_all_csv(selected_store_1, labels, file_name_keyword)
+                all_scores_2 = get_scores_from_all_csv(selected_store_2, labels, file_name_keyword)
+                angles = np.linspace(0, 2 * np.pi, 7)
+
                 fig, ax = plt.subplots(figsize=(5, 5), subplot_kw={'projection': 'polar'})
 
-                # 📌 첫 번째 매장 차트 (파란색)
-                scores_1 = np.append(all_scores_1[i], all_scores_1[i][0])  # 닫힌 육각형
+                scores_1 = np.append(all_scores_1, all_scores_1[0])  # 닫힌 육각형
                 ax.plot(angles, scores_1, 'o-', linewidth=2, label=selected_store_1, color="blue")
                 ax.fill(angles, scores_1, alpha=0.3, color="blue")
 
                 # 📌 두 번째 매장 차트 (빨간색)
-                scores_2 = np.append(all_scores_2[i], all_scores_2[i][0])  # 닫힌 육각형
+                scores_2 = np.append(all_scores_2, all_scores_2[0])  # 닫힌 육각형
                 ax.plot(angles, scores_2, 'o-', linewidth=2, label=selected_store_2, color="red")
                 ax.fill(angles, scores_2, alpha=0.3, color="red")
 
