@@ -570,7 +570,7 @@ with tab2:
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Main content columns
-    col1, col2 = st.columns([5, 5])
+    col1, col2 = st.columns([6, 4])
 
     with col1:
         st.subheader("매장 위치 및 분포")
