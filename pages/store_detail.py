@@ -74,15 +74,6 @@ for i, (title, labels) in enumerate(chart_info):
         fig = plot_radar_chart(title, labels, scores, store_name, "blue")
         st.pyplot(fig)
 
-# =========================================
-# 5. 유형별 b값 출력
-# =========================================
-st.subheader("📊 유형별 b 값 목록")
-for file_name, theme_b_values in b_values_dict.items():
-    st.write(f"**📂 파일명: {file_name}**")
-    for theme, b in theme_b_values.items():
-        st.write(f"- {theme}: b = {b}")
-
 # 뒤로 가기 버튼
 if st.button("⬅️ 돌아가기"):
     st.switch_page("app.py")
