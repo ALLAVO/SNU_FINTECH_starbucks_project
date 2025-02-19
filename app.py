@@ -669,8 +669,10 @@ with tab2:
                     fill_opacity=0.7
                 ).add_to(m)
 
-        # 지도 표시
-        st_folium(m, width=800, height=600)
+        # # 지도 표시
+        # st_folium(m, width=800, height=600)
+        # Folium 지도 출력 (Streamlit에서 여백 없이 표시)
+        st_folium(m, use_container_width=True, height=700)
 
     # 오른쪽 컬럼 - 추천 매장 목록 표시
     with col2:
