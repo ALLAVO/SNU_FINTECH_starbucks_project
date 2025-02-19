@@ -268,33 +268,32 @@ st.markdown(
     /* 🟢 탭 컨테이너 스타일 */
     div.stTabs {
         font-weight: bold;         /* 기본 글씨 두껍게 */
-        font-size: 24px;           /* 기본 글씨 크기 */
-        padding: 20px;             /* 내부 여백 */
+        font-size: 2vw;            /* 기본 글씨 크기 (뷰포트 너비 기준) */
+        padding: 2vh 3vw;          /* 내부 여백 (뷰포트 기준) */
     }
     
     /* 🟡 활성 탭 스타일링 (선택된 탭) */
     div.stTabs [data-baseweb="tab"][aria-selected="true"] {
         background-color: #004b2b; /* 선택된 탭 배경색 (더 진한 스타벅스 그린) */
         color: #FFFFFF !important; /* 선택된 탭 글씨색 (흰색) */
-        font-size: 30px;          /* 선택된 탭 글씨 크기 (더 크게) */
+        font-size: 2.5vw;          /* 선택된 탭 글씨 크기 (뷰포트 너비 기준) */
         font-family: 'Noto Sans KR', sans-serif; /* 원하는 폰트 적용 */
         font-weight: 900;           /* 글씨 매우 두껍게 */
-        # padding: 25px 50px;          /* 탭 크기 확대 */   
+        padding: 1.8vh 3vw;         /* 탭 크기 확대 (뷰포트 기준) */   
         transition: all 0.3s ease-in-out;
-        border-radius: 12px;       /* 모서리 둥글게 */
+        border-radius: 1vw;         /* 모서리 둥글게 (뷰포트 기준) */
     }
     
     /* 🟠 비활성 탭 스타일링 */
     div.stTabs [data-baseweb="tab"] {
         background-color: #C3D7BA; 
         transition: background-color 0.3s ease, color 0.3s ease;
-        padding: 1rem 1.5rem; /* 탭 내부 여백 */
-        font-weight: 600;     /* 기본 글씨 두께 */
-        font-size: 24px;      /* 기본 글씨 크기 */
-        padding: 25px 40px;          /* 탭 크기 확대 */   
-        color: #1E3932;       /* 글씨색 (짙은 스타벅스 그린) */
+        padding: 1.2vh 2vw;          /* 탭 내부 여백 (뷰포트 기준) */
+        font-weight: 600;          /* 기본 글씨 두께 */
+        font-size: 2vw;            /* 기본 글씨 크기 (뷰포트 너비 기준) */
+        color: #1E3932;            /* 글씨색 (짙은 스타벅스 그린) */
         font-family: 'Noto Sans KR', sans-serif; /* 원하는 폰트 적용 */
-        border-radius: 12px;       /* 모서리 둥글게 */
+        border-radius: 1vw;        /* 모서리 둥글게 (뷰포트 기준) */
     }
     
     /* 🟢 탭 호버 시 스타일 */
@@ -303,8 +302,7 @@ st.markdown(
         color: #FFFFFF; /* 흰색 글씨 */
         transform: scale(1.05); /* 약간 확대 효과 */
         transition: all 0.2s ease-in-out;
-        border-radius: 12px;       /* 모서리 둥글게 */
-
+        border-radius: 1vw;        /* 모서리 둥글게 (뷰포트 기준) */
     }
     </style>
     """,
@@ -315,19 +313,32 @@ st.markdown(
 # =========================================
 with tab1:
     st.markdown(
-    """
-    <style>
-    /* 🟡 1. 검색창 호버 시 스타일링 (마우스 오버 효과) */
-    div[data-baseweb="input"]:hover {
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* 그림자를 더 진하게 (부드러운 떠 있는 느낌) */
-    }
-
-    /* 🟠 2. 검색창 포커스 시 스타일링 (클릭 시 효과) */
-    div[data-baseweb="input"]:focus-within {
-        box-shadow: 0 0 10px rgba(0,128,0,0.5); /* 초록색 하이라이트 테두리 (스타벅스 테마) */
-    }
-    </style>
-    """, unsafe_allow_html=True)
+        """
+        <style>
+        /* 🟢 기본 검색창 스타일링 */
+        div[data-baseweb="input"] {
+            border-radius: 25px; /* 모서리를 둥글게 (구글 검색창 스타일) */
+            border: 2px solid #006241; /* 테두리 색상 (스타벅스 그린) */
+            padding: 5px; /* 내부 여백 (입력창 안의 여백) */
+            font-size: 25px; /* 입력 글자 크기 */
+            transition: box-shadow 0.3s ease; /* 호버 시 박스 그림자 부드럽게 전환 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15); /* 기본 그림자 (은은한 느낌) */
+            width: 60%; /* 검색창 너비 (화면의 80% 차지) */
+            height: 2.5em; /* 폰트 크기의 2.5배 */
+            margin: 0 auto; /* 검색창을 화면 중앙 정렬 */
+        }
+    
+        /* 🟡 검색창 호버 시 스타일링 (마우스 오버 효과) */
+        div[data-baseweb="input"]:hover {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* 그림자를 더 진하게 (부드러운 떠 있는 느낌) */
+        }
+    
+        /* 🟠 검색창 포커스 시 스타일링 (클릭 시 효과) */
+        div[data-baseweb="input"]:focus-within {
+            box-shadow: 0 0 10px rgba(0,128,0,0.5); /* 초록색 하이라이트 테두리 (스타벅스 테마) */
+        }
+        </style>
+        """, unsafe_allow_html=True)
     # 🔍 검색 기능
     # search_query = st.text_input("🔍 매장 검색", value="")
     # 📌 검색창 표시 (구글 스타일)
@@ -359,21 +370,21 @@ with tab1:
             flex-direction: column;     /* 세로 정렬 */
             align-items: center;        /* 가로축 중앙 정렬 */
             justify-content: center;    /* 세로축 중앙 정렬 */
-            width: 180px;               /* 네모칸 너비 */
-            height: 120px;              /* 네모칸 높이 */
+            width: 20vw;               /* 네모칸 너비 (뷰포트 너비의 20%) */
+            height: 10vh;              /* 네모칸 높이 (뷰포트 높이의 10%) */
             border: 3px solid #006241;  /* 테두리 (스타벅스 그린) */
             border-radius: 16px;        /* 모서리 둥글게 */
             background-color: #F5F5F5;  /* 배경색 (연한 회색) */
             color: #006241;             /* 글씨색 (스타벅스 그린) */
             font-weight: bold;          /* 글씨 두껍게 */
-            font-size: 18px;            /* 글씨 크기 */
-            padding: 8px;               /* 내부 여백 */
-            margin: 8px;                /* 외부 여백 */
+            font-size: 1.2vw;            /* 글씨 크기 (뷰포트 너비 기준) */
+            padding: 1vw;               /* 내부 여백 */
+            margin: 1vw;                /* 외부 여백 */
             transition: all 0.3s ease;  /* 부드러운 전환 효과 */
             box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1); /* 은은한 그림자 */
             cursor: pointer;            /* 클릭 시 포인터 모양 */
         }
-    
+        
         /* 🟡 체크박스 호버 시 효과 */
         div.stCheckbox > label:hover {
             background-color: #CFE9E5;  /* 호버 시 연한 민트색 */
@@ -386,7 +397,7 @@ with tab1:
             background-color: #CFE9E5;  /* 배경색 (스타벅스 그린) */
             color: #FFFFFF;             /* 글씨색 (흰색) */
             border: 3px solid #004b2b;  /* 테두리 (더 진한 스타벅스 그린) */
-            font-size: 20px;            /* 선택 시 글씨 크기 확대 */
+            font-size: 1.5vw;           /* 선택 시 글씨 크기 확대 */
             transition: all 0.3s ease;  /* 부드러운 전환 효과 */
         }
     
@@ -403,8 +414,8 @@ with tab1:
         }
         </style>
         """,
-        unsafe_allow_html=True
-    )
+                unsafe_allow_html=True
+                )
 
     st.markdown("<div id='chip-container'>", unsafe_allow_html=True)
     # 한 행에 최대 5개씩 배치
