@@ -25,15 +25,11 @@ def load_store_data():
     df = pd.read_csv('data/starbucks_seoul_all_store_info.csv')
     df['district'] = df['주소'].str.extract(r'서울특별시\s+(\S+구)')
     df['매장명'] = df['매장명'].str.strip()
-    df['매장명_원본'] = df['매장명']  # 원본 이름 보존
-    df['매장명'] = df['매장명'].str.replace('점', '').str.strip()  # '점' 제거된 버전 사용
     return df
 
 @st.cache_data
 def load_theme_scores():
     merged_df, b_values = load_all_scores()
-    merged_df['Store_Original'] = merged_df['Store']  # 원본 이름 보존
-    merged_df['Store'] = merged_df['Store'].str.strip().str.replace('점', '').str.strip()
     return merged_df, b_values
 
 # 매장명 정규화 함수
@@ -49,7 +45,7 @@ def main():
     
     # 데이터 로드
     df_stores = load_store_data()
-    store_list = [""] + list(df_stores['매장명_원본'].unique())
+    store_list = [""] + list(df_stores['매장명'].unique())
     
     # 선택된 매장이 있는지 확인
     has_selected_stores = selected_store_1 != '' and selected_store_2 != ''
