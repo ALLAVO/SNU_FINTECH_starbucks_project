@@ -385,20 +385,32 @@ st.markdown(
 # "매장 목록 보기" 탭
 # =========================================
 with tab1:
-    st.markdown(
-    """
-    <style>
-    /* 🟡 1. 검색창 호버 시 스타일링 (마우스 오버 효과) */
-    div[data-baseweb="input"]:hover {
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* 그림자를 더 진하게 (부드러운 떠 있는 느낌) */
-    }
-
-    /* 🟠 2. 검색창 포커스 시 스타일링 (클릭 시 효과) */
-    div[data-baseweb="input"]:focus-within {
-        box-shadow: 0 0 10px rgba(0,128,0,0.5); /* 초록색 하이라이트 테두리 (스타벅스 테마) */
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    st.markdown("""
+        <style>
+        /* 🟢 기본 검색창 스타일링 */
+        div[data-baseweb="input"] {
+            border-radius: 25px; /* 모서리를 둥글게 (구글 검색창 스타일) */
+            border: 2px solid #006241; /* 테두리 색상 (스타벅스 그린) */
+            padding: 5px; /* 내부 여백 (입력창 안의 여백) */
+            font-size: 20px; /* 입력 글자 크기 */
+            transition: box-shadow 0.3s ease; /* 호버 시 박스 그림자 부드럽게 전환 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15); /* 기본 그림자 (은은한 느낌) */
+            width: 70%; /* 검색창 너비 (화면의 70% 차지) */
+            height: 6ㄴvh; /* 화면 높이의 5% */
+            margin: 0 auto; /* 검색창을 화면 중앙 정렬 */
+        }
+    
+        /* 🟡 검색창 호버 시 스타일링 (마우스 오버 효과) */
+        div[data-baseweb="input"]:hover {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* 그림자를 더 진하게 (부드러운 떠 있는 느낌) */
+        }
+    
+        /* 🟠 검색창 포커스 시 스타일링 (클릭 시 효과) */
+        div[data-baseweb="input"]:focus-within {
+            box-shadow: 0 0 10px rgba(0,128,0,0.5); /* 초록색 하이라이트 테두리 (스타벅스 테마) */
+        }
+        </style>
+        """, unsafe_allow_html=True)
     # 🔍 검색 기능
     # search_query = st.text_input("🔍 매장 검색", value="")
     # 📌 검색창 표시 (구글 스타일)
@@ -431,7 +443,7 @@ with tab1:
             align-items: center;        /* 가로축 중앙 정렬 */
             justify-content: center;    /* 세로축 중앙 정렬 */
             width: 20vw;               /* 네모칸 너비 (뷰포트 너비의 20%) */
-            height: 15vh;              /* 네모칸 높이 (뷰포트 높이의 15%) */
+            height: 10vh;              /* 네모칸 높이 (뷰포트 높이의 15%) */
             border: 3px solid #006241;  /* 테두리 (스타벅스 그린) */
             border-radius: 16px;        /* 모서리 둥글게 */
             background-color: #F5F5F5;  /* 배경색 (연한 회색) */
@@ -511,9 +523,43 @@ with tab1:
             if search_query.lower() in store['name'].lower()
         ]
     if not filtered_stores:
-        st.warning("🚫 해당 검색어에 맞는 매장이 없습니다.")
+        # 알림 메시지에 대한 CSS 스타일 적용
+        st.markdown(
+            """
+            <style>
+            .custom-warning {
+                background-color: rgba(120,155,0, 0.7);  /* 빨간색 배경, 투명도 20% */
+                color: #151B19;
+                padding: 10px;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # 필터링 결과가 없을 때 경고 메시지 표시
+        filtered_stores = []  # 예시: 검색 결과가 없을 때
+
+        if not filtered_stores:
+            st.markdown('<div class="custom-warning">📢 원하는 매장 테마를 선택해주세요.</div>', unsafe_allow_html=True)
+        # st.warning("🚫 해당 검색어에 맞는 매장이 없습니다.")
+
     else:
-        st.markdown("#### 서울 지역 분석 결과 바로보기")
+        # CSS 스타일 적용
+        st.markdown(
+            """
+            <style>
+            .custom-title {
+                color: #FFFFFF;  /* 진한 초록색 */
+                font-weight: bold;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown('#### <p class="custom-title">서울 지역 분석 결과 바로보기</p>', unsafe_allow_html=True)
         store_icon_url = "https://img.icons8.com/fluency/48/starbucks.png"
 
         # 매장 목록을 3개씩 나누어 표시
@@ -526,7 +572,8 @@ with tab1:
                     store_name = store["name"]
                     # 매장 유형에 해당하는 이모지와 텍스트
                     emoji_types = [f"{type_emoji_dict.get(x, '❓')} {x}" for x in store.get('types', [])]
-                    with st.expander(label=f"**{i+j+1}. {store_name}**", expanded=True):
+                    # with st.expander(label=f"**{i+j+1}. {store_name}**", expanded=True):
+                    with st.expander(label="", expanded=True):
                         store_card_html = f"""
                         <div class='store-card slide-up'>
                             <img src='{store_icon_url}' alt='Store Icon' class='store-icon'/>
@@ -548,7 +595,7 @@ with tab2:
 
     # 필터 컬럼 생성
     filter_col1, filter_col2 = st.columns(2)
-    
+
     with filter_col1:
         # 기존 스타일과 유사하게 구 선택 드롭다운
         df_stores = load_store_data()
@@ -574,7 +621,7 @@ with tab2:
 
     with col1:
         st.subheader("매장 위치 및 분포")
-        
+
         # 선택된 지역구에 따라 지도 중심 설정
         if selected_district != '전체':
             district_data = df_stores[df_stores['district'] == selected_district]
@@ -626,7 +673,7 @@ with tab2:
         # 매장 마커 추가 (TOP 10은 특별 강조)
         for idx, row in display_stores.iterrows():
             is_top10 = row['매장명_원본'] in top10_stores
-            
+
             # 팝업 내용
             popup_content = f"""
             <div style="font-family: 'Malgun Gothic', sans-serif;">
@@ -636,7 +683,7 @@ with tab2:
                 {f'<br><b style="color: #036635;">✨ {selected_theme} TOP 10 매장</b>' if is_top10 else ''}
             </div>
             """
-            
+
             # TOP 10 매장은 특별 마커로 표시
             if is_top10:
                 folium.CircleMarker(
@@ -648,7 +695,7 @@ with tab2:
                     fill_opacity=0.9,
                     weight=2
                 ).add_to(m)
-                
+
                 # 매장명 라벨 추가
                 folium.map.Marker(
                     [row['위도'], row['경도']],
@@ -679,15 +726,15 @@ with tab2:
         st.markdown(f"### {selected_theme} 추천 매장 TOP 10")
         if selected_district != '전체':
             st.markdown(f"*{selected_district} 지역*")
-        
+
         total_scores = get_store_theme_scores(selected_theme, selected_district)
-        
+
         if not total_scores.empty:
             top10 = total_scores.head(10)
-            
+
             # 표와 체크박스를 위한 컬럼 생성
             table_col, checkbox_col = st.columns([3, 1])
-            
+
             with table_col:
                 # 기존 데이터프레임 표시
                 styled_df = pd.DataFrame({
@@ -695,7 +742,7 @@ with tab2:
                     '자치구': top10['district'],
                     '평점': top10['log_score'].round(1)
                 }).reset_index(drop=True)
-                
+
                 # 스타일 적용된 데이터프레임
                 st.dataframe(
                     styled_df,
@@ -718,19 +765,19 @@ with tab2:
                     use_container_width=True,
                     height=400
                 )
-            
+
             with checkbox_col:
                 st.write("매장 선택")
-                
+
                 # 선택된 매장 리스트 초기화
                 if 'selected_stores' not in st.session_state:
                     st.session_state.selected_stores = []
-                
+
                 # 각 매장에 대한 체크박스 생성
                 for idx, row in top10.iterrows():
                     store_name = row['Store']
                     is_checked = store_name in st.session_state.selected_stores
-                    
+
                     # 체크박스 UI 표시 (최대 2개 제한)
                     if st.checkbox(
                         '',
@@ -746,8 +793,8 @@ with tab2:
                             st.session_state.selected_stores.append(store_name)
                     elif store_name in st.session_state.selected_stores:
                         st.session_state.selected_stores.remove(store_name)
-                
-                # 매장 비교하기 버튼 
+
+                # 매장 비교하기 버튼
                 if len(st.session_state.selected_stores) == 2:
                     compare_button = st.button("매장 비교하기", key="compare_btn")
                     if compare_button:
@@ -761,7 +808,7 @@ with tab2:
 
         else:
             st.info("해당 조건에 맞는 매장이 없습니다.")
-            
+
         # 평점 설명
         st.markdown("""
         ---
