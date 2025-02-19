@@ -359,16 +359,16 @@ with tab1:
             flex-direction: column;     /* 세로 정렬 */
             align-items: center;        /* 가로축 중앙 정렬 */
             justify-content: center;    /* 세로축 중앙 정렬 */
-            width: 180px;               /* 네모칸 너비 */
-            height: 120px;              /* 네모칸 높이 */
+            width: 20vw;               /* 네모칸 너비 (뷰포트 너비의 20%) */
+            height: 15vh;              /* 네모칸 높이 (뷰포트 높이의 15%) */
             border: 3px solid #006241;  /* 테두리 (스타벅스 그린) */
             border-radius: 16px;        /* 모서리 둥글게 */
             background-color: #F5F5F5;  /* 배경색 (연한 회색) */
             color: #006241;             /* 글씨색 (스타벅스 그린) */
             font-weight: bold;          /* 글씨 두껍게 */
-            font-size: 18px;            /* 글씨 크기 */
-            padding: 8px;               /* 내부 여백 */
-            margin: 8px;                /* 외부 여백 */
+            font-size: 1.2vw;            /* 글씨 크기 (뷰포트 너비 기준) */
+            padding: 1vw;               /* 내부 여백 */
+            margin: 1vw;                /* 외부 여백 */
             transition: all 0.3s ease;  /* 부드러운 전환 효과 */
             box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1); /* 은은한 그림자 */
             cursor: pointer;            /* 클릭 시 포인터 모양 */
@@ -386,7 +386,7 @@ with tab1:
             background-color: #CFE9E5;  /* 배경색 (스타벅스 그린) */
             color: #FFFFFF;             /* 글씨색 (흰색) */
             border: 3px solid #004b2b;  /* 테두리 (더 진한 스타벅스 그린) */
-            font-size: 20px;            /* 선택 시 글씨 크기 확대 */
+            font-size: 1.5vw;           /* 선택 시 글씨 크기 확대 */
             transition: all 0.3s ease;  /* 부드러운 전환 효과 */
         }
     
