@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 # CSV 파일 읽기
-df = pd.read_csv('/Users/hyungjuncho/Documents/SNU_BFA/visual/streamlit_starbucks.2/hexa_point_data/수다형_테마_키워드_매장별_Theme_score.csv')
+df = pd.read_csv('hexa_point_data/수다형_테마_키워드_매장별_Theme_score.csv')
 
 # 모든 unique한 theme 추출
 themes = df['Theme'].unique()
