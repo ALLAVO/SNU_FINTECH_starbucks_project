@@ -51,7 +51,6 @@ if "selected_store" not in st.session_state:
     st.stop()
 
 store_name = st.session_state.selected_store
-
 # st.title("📊 스타벅스 매장 상세 분석")
 st.title(f"{store_name} 지점 유형 분석")
 

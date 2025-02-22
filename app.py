@@ -1,15 +1,12 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import os
 import folium
 from streamlit_folium import st_folium
-import plotly.express as px
-import requests
-from store_data import chart_info
 from modules.score_utils import load_all_scores, get_scores_from_all_csv  # 모듈 불러오기
 import base64
+import requests
 
 # 📌 CSV 데이터 로드
 csv_file_path = "data/starbucks_seoul_data.csv"
@@ -411,19 +408,15 @@ with tab1:
         }
         </style>
         """, unsafe_allow_html=True)
-    # 🔍 검색 기능
-    # search_query = st.text_input("🔍 매장 검색", value="")
-    # 📌 검색창 표시 (구글 스타일)
+
+    # 🔍 검색 기능 (구글 스타일)
     search_query = st.text_input(
         "",         # 검색창 위에 문구 추가
         value="",
         placeholder="매장명을 검색해 보세요...",
     )
 
-
-    # ----------------------------------
-    # [변경] 매장 유형 선택 -> 네모칸 전체가 클릭 가능한 커스텀 체크박스 UI
-    # ----------------------------------
+    # 매장 유형 선택 -> 네모칸 전체가 클릭 가능한 커스텀 체크박스 UI
     type_emoji_dict = {
         "대학가": "🎓",
         "터미널/기차역": "🚉",
@@ -522,6 +515,7 @@ with tab1:
             store for store in filtered_stores
             if search_query.lower() in store['name'].lower()
         ]
+
     if not filtered_stores:
         # 알림 메시지에 대한 CSS 스타일 적용
         st.markdown(
@@ -547,12 +541,12 @@ with tab1:
         # st.warning("🚫 해당 검색어에 맞는 매장이 없습니다.")
 
     else:
-        # CSS 스타일 적용
+        # 📌 [css적용] 글씨 밑에 배경책 적용
         st.markdown(
             """
             <style>
             .custom-title {
-                color: #000000;  /* 글씨 색상 */
+                color: #ffffff; /* 글자 색상 (흰색) */
                 font-weight: bold;
                 display: inline-block;
                 background-color: rgba(120,155,0, 0.7);  /* 흰색 배경, 투명도 50% */
@@ -563,7 +557,6 @@ with tab1:
             """,
             unsafe_allow_html=True
         )
-
         st.markdown('#### <p class="custom-title">서울 지역 분석 결과 바로보기</p>', unsafe_allow_html=True)
 
         store_icon_url = "https://img.icons8.com/fluency/48/starbucks.png"
@@ -592,12 +585,26 @@ with tab1:
                             st.session_state.selected_store = store_name
                             st.switch_page("pages/store_detail.py")
 
-# =========================================
+
 # "개인 특성별 매장 추천" 탭 - 새로운 내용으로 대체
-# =========================================
 with tab2:
-    st.title("서울 스타벅스 개인 특성 별 매장 추천")
-    st.markdown("<br>", unsafe_allow_html=True)
+    # "자치구 선택", "매장 유형 선택" 등 라벨에 대한 배경색
+    st.markdown(
+        """
+        <style>
+            .custom-label {
+                display: inline-block;
+                background-color: rgba(120, 155, 0, 0.7); /* 연두빛 배경, 투명도 70% */
+                color: #ffffff; /* 글자 색상 (흰색) */
+                font-weight: bold;
+                padding: 5px 10px;
+                border-radius: 5px;
+                margin-bottom: 0px; /* selectbox와의 간격 조정 */
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
     # 필터 컬럼 생성
     filter_col1, filter_col2 = st.columns(2)
@@ -606,27 +613,47 @@ with tab2:
         # 기존 스타일과 유사하게 구 선택 드롭다운
         df_stores = load_store_data()
         districts = ['전체'] + sorted(df_stores['district'].unique().tolist())
+
+        # HTML을 활용한 제목 스타일링 (배경색 적용)
+        st.markdown('##### <p class="custom-label">자치구 선택</p>', unsafe_allow_html=True)
+
+        # selectbox의 label을 완전히 숨기기
         selected_district = st.selectbox(
-            '자치구 선택',
-            districts,
-            key='district_filter'
+            label="",
+            options=districts,
+            key="district_filter",
+            label_visibility="collapsed"  # 제목 숨기기
         )
 
     with filter_col2:
-        # 테마 선택 - 스타벅스 스타일로 통일
+        # HTML을 활용한 제목 스타일링
+        st.markdown('##### <p class="custom-label">매장 유형 선택</p>', unsafe_allow_html=True)
+
+        # selectbox의 label을 완전히 숨기기
         selected_theme = st.selectbox(
-            "매장 유형 선택",
-            ["내향형", "수다형", "외향형", "카공형"],
-            key='theme_filter'
+            label="",
+            options=["내향형", "수다형", "외향형", "카공형"],
+            key="theme_filter",
+            label_visibility="collapsed"  # 제목 숨기기
         )
 
+
     st.markdown("<br>", unsafe_allow_html=True)
+
 
     # Main content columns
     col1, col2 = st.columns([5, 5])
 
     with col1:
-        st.subheader("매장 위치 및 분포")
+        if selected_district != '전체':
+            st.markdown(
+                f'##### <p class="custom-label">{selected_district} 지역 매장 분포도</p>',
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown('##### <p class="custom-label">서울 전체 매장 분포도</p>', unsafe_allow_html=True)
+
+        # st.subheader("매장 위치 및 분포")
 
         # 선택된 지역구에 따라 지도 중심 설정
         if selected_district != '전체':
@@ -729,9 +756,13 @@ with tab2:
 
     # 오른쪽 컬럼 - 추천 매장 목록 표시
     with col2:
-        st.markdown(f"### {selected_theme} 추천 매장 TOP 10")
-        if selected_district != '전체':
-            st.markdown(f"*{selected_district} 지역*")
+        # {selected_theme} 추천 매장 TOP 10 출력 (배경색 적용)
+        st.markdown(
+            f'##### <p class="custom-label">{selected_theme} 추천 매장 TOP 10</p>',
+            unsafe_allow_html=True
+        )
+        # if selected_district != '전체':
+        #     st.markdown(f"*{selected_district} 지역*")
 
         total_scores = get_store_theme_scores(selected_theme, selected_district)
 
