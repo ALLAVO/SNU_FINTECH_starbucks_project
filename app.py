@@ -82,43 +82,43 @@ def get_store_theme_scores(theme_type, selected_district='전체'):
         merged_df, _ = load_theme_scores()
         theme_pattern = f"{theme_type}_테마_키워드_매장별_Theme_score.csv"
         theme_df = merged_df[merged_df['FileName'].str.contains(theme_pattern, case=False)]
-        
+
         if theme_df.empty:
             return pd.DataFrame()
-            
+
         df_stores = load_store_data()
-        
+
         # 매장명에서 '점'이 제거된 버전으로 매칭
         theme_df = theme_df.merge(
-            df_stores[['매장명', 'district', '주소', '매장명_원본']], 
+            df_stores[['매장명', 'district', '주소', '매장명_원본']],
             left_on='Store',
             right_on='매장명',
             how='inner'
         )
-        
+
         if selected_district != '전체':
             theme_df = theme_df[theme_df['district'] == selected_district]
-        
+
         total_scores = theme_df.groupby('매장명_원본').agg({
             'log_score': 'sum',
             'district': 'first',
             '주소': 'first'
         }).reset_index()
-        
+
         # 컬럼명 변경 - Store로 통일
         total_scores = total_scores.rename(columns={'매장명_원본': 'Store'})
         total_scores = total_scores.sort_values('log_score', ascending=False)
-        
+
         return total_scores
-        
+
     except Exception as e:
         st.error(f"데이터 처리 중 오류가 발생했습니다: {str(e)}")
         return pd.DataFrame()
-    
+
 #지도 정보를 불러오기 위한 데이터 미리 호출
 df_stores = load_store_data()
 seoul_geo = load_seoul_geojson()
-    
+
 # =========================================
 # 추가 CSS & 디자인 요소 (네비게이션 바, 푸터, fade-in 애니메이션, 커스텀 네모칸 체크박스)
 # =========================================
@@ -396,7 +396,7 @@ with tab1:
             transition: box-shadow 0.3s ease; /* 호버 시 박스 그림자 부드럽게 전환 */
             box-shadow: 0 2px 5px rgba(0,0,0,0.15); /* 기본 그림자 (은은한 느낌) */
             width: 70%; /* 검색창 너비 (화면의 70% 차지) */
-            height: 6ㄴvh; /* 화면 높이의 5% */
+            height: 5.3vh; /* 화면 높이의 5% */
             margin: 0 auto; /* 검색창을 화면 중앙 정렬 */
         }
     
@@ -444,7 +444,7 @@ with tab1:
             justify-content: center;    /* 세로축 중앙 정렬 */
             width: 20vw;               /* 네모칸 너비 (뷰포트 너비의 20%) */
             height: 10vh;              /* 네모칸 높이 (뷰포트 높이의 15%) */
-            border: 3px solid #006241;  /* 테두리 (스타벅스 그린) */
+            border: 1px solid #006241;  /* 테두리 (스타벅스 그린) */
             border-radius: 16px;        /* 모서리 둥글게 */
             background-color: #F5F5F5;  /* 배경색 (연한 회색) */
             color: #006241;             /* 글씨색 (스타벅스 그린) */
@@ -552,14 +552,20 @@ with tab1:
             """
             <style>
             .custom-title {
-                color: #FFFFFF;  /* 진한 초록색 */
+                color: #000000;  /* 글씨 색상 */
                 font-weight: bold;
+                display: inline-block;
+                background-color: rgba(120,155,0, 0.7);  /* 흰색 배경, 투명도 50% */
+                padding: 5px 10px;
+                border-radius: 5px;
             }
             </style>
             """,
             unsafe_allow_html=True
         )
+
         st.markdown('#### <p class="custom-title">서울 지역 분석 결과 바로보기</p>', unsafe_allow_html=True)
+
         store_icon_url = "https://img.icons8.com/fluency/48/starbucks.png"
 
         # 매장 목록을 3개씩 나누어 표시
