@@ -59,19 +59,19 @@ def load_seoul_geojson():
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv('starbucks_seoul_all_store_info.csv')
+    df = pd.read_csv('data/starbucks_seoul_all_store_info.csv')
     df['district'] = df['주소'].str.extract(r'서울특별시\s+(\S+구)')
     df['매장명'] = df['매장명'].str.replace('\n', '') + df['매장명'].apply(lambda x: '점' if not x.endswith('점') else '')
     return df
 
 @st.cache_data
 def load_review_data():
-    df = pd.read_csv('cleaned_starbucks_reviews_with_counts.csv')
+    df = pd.read_csv('data/cleaned_starbucks_reviews_with_counts.csv')
     return df
 
 @st.cache_data
 def load_worker_data():
-    df = pd.read_csv('seoul_district_age_group_workers.csv')
+    df = pd.read_csv('data/seoul_district_age_group_workers.csv')
     return df
 
 @st.cache_data
@@ -88,12 +88,12 @@ def generate_wordcloud(text_data, width=400, height=200):
 
 @st.cache_data
 def load_review_counts():
-    df = pd.read_csv('starbucks_review_num_with_district.csv')
+    df = pd.read_csv('data/starbucks_review_num_with_district.csv')
     return df
 
 @st.cache_data
 def load_beverage_data():
-    df = pd.read_csv('starbucks_nutrition_with_images.csv')
+    df = pd.read_csv('data/starbucks_nutrition_with_images.csv')
     return df
 
 # Load all data

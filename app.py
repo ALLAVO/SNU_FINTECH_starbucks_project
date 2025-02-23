@@ -7,6 +7,10 @@ from streamlit_folium import st_folium
 from modules.score_utils import load_all_scores, get_scores_from_all_csv  # 모듈 불러오기
 import base64
 import requests
+import plotly.express as px
+import plotly.graph_objects as go
+from wordcloud import WordCloud
+import numpy as np
 
 # 📌 CSV 데이터 로드
 csv_file_path = "data/starbucks_seoul_data.csv"
@@ -47,7 +51,17 @@ st.set_page_config(
     layout="wide",
     page_title='SIREN VALUE',
     page_icon="https://img.icons8.com/fluency/48/starbucks.png",
+    initial_sidebar_state="collapsed" #처음에 열때 사이드 바 접힌 상태로 나옴
 )
+
+# 매장 유형별 색상 정의
+store_type_colors = {
+    'general': '#00704A',     # Regular Starbucks green
+    'reserve': '#A6192E',     # Reserve stores in dark red
+    'generalDT': '#FF9900',   # Drive-thru in orange
+    'generalWT': '#4B3C8C'    # Walk-thru in purple
+}
+
 # ================ 추가 유틸리티 함수 (Tab2) ================
 # Tab2의 점수 총합 비교를 위한 함수들 포함
 # 서울 매장 데이터 로드 함수
@@ -73,6 +87,41 @@ def load_theme_scores():
     merged_df['Store_Original'] = merged_df['Store']  # 원본 이름 보존
     merged_df['Store'] = merged_df['Store'].str.strip().str.replace('점', '').str.strip()
     return merged_df, b_values
+
+# ================ 추가 유틸리티 함수 (Tab3,4) ================
+# Tab3의 매장, 인구 수 비교를 위한 함수들 포함
+# Tab4의 음료 분석 비교를 위한 함수들 포함
+@st.cache_data
+def load_beverage_data():
+    df = pd.read_csv('data/starbucks_nutrition_with_images.csv')
+    return df
+
+@st.cache_data
+def load_review_counts():
+    df = pd.read_csv('data/starbucks_review_num_with_district.csv')
+    return df
+
+@st.cache_data
+def load_worker_data():
+    df = pd.read_csv('data/seoul_district_age_group_workers.csv')
+    return df
+
+@st.cache_data
+def load_review_data():
+    df = pd.read_csv('data/cleaned_starbucks_reviews_with_counts.csv')
+    return df
+
+@st.cache_data
+def generate_wordcloud(text_data, width=800, height=400):
+    wordcloud = WordCloud(
+        font_path='NanumSquareRoundB.ttf',  # 폰트 경로 확인 필요
+        width=width,
+        height=height,
+        background_color='white',
+        colormap='Greens',
+        max_words=100
+    ).generate_from_frequencies(text_data)
+    return wordcloud
 
 def get_store_theme_scores(theme_type, selected_district='전체'):
     try:
@@ -112,9 +161,34 @@ def get_store_theme_scores(theme_type, selected_district='전체'):
         st.error(f"데이터 처리 중 오류가 발생했습니다: {str(e)}")
         return pd.DataFrame()
 
-#지도 정보를 불러오기 위한 데이터 미리 호출
+#지도, 매장, 음료 정보를 불러오기 위한 데이터 미리 호출
 df_stores = load_store_data()
 seoul_geo = load_seoul_geojson()
+df_beverages = load_beverage_data()
+df_review_counts = load_review_counts()
+df_workers = load_worker_data()
+df_reviews = load_review_data()
+
+# TAB4의 직장인구 분석을 위한 데이터 전처리
+# 직장인구 데이터 처리
+df_workers['total_workers'] = (
+    df_workers['male_10s_20s'] + df_workers['male_30s_40s'] + df_workers['male_50s_60s_above'] +
+    df_workers['female_10s_20s'] + df_workers['female_30s_40s'] + df_workers['female_50s_60s_above']
+)
+
+# 구별 매장 수 계산
+stores_per_district = df_stores.groupby('district').size().reset_index(name='store_count')
+
+# 직장인구와 매장 수 데이터 병합
+combined_district_data = pd.merge(
+    df_workers,
+    stores_per_district,
+    left_on='district_name',
+    right_on='district',
+    how='left'
+)
+combined_district_data['store_count'] = combined_district_data['store_count'].fillna(0)
+combined_district_data['stores_per_10k'] = (combined_district_data['store_count'] / combined_district_data['total_workers']) * 10000
 
 # =========================================
 # 추가 CSS & 디자인 요소 (네비게이션 바, 푸터, fade-in 애니메이션, 커스텀 네모칸 체크박스)
@@ -328,7 +402,7 @@ def add_bg_from_local(image_file):
 add_bg_from_local("images/스타벅스2.avif")
 
 # 탭 이름 변경 - 기존 "매장 별 비교하기"에서 "서울 스타벅스 개인 특성 별 매장 추천"으로 변경
-tab1, tab2 = st.tabs(["매장 목록", "서울 스타벅스 개인 특성 별 매장 추천"])
+tab1, tab2, tab3, tab4 = st.tabs(["매장 목록", "서울 스타벅스 개인 특성 별 매장 추천", "매장 분석", "음료 분석"])
 
 st.markdown(
     """
@@ -862,3 +936,370 @@ with tab2:
                 <span style="display: block;">⭐ 높은 점수일수록 해당 유형에 적합한 매장입니다.</span>
             </div>
         """, unsafe_allow_html=True)
+    
+# =========================================
+# Tab 3: 매장 분석
+# =========================================
+with tab3:
+    # 필터 섹션
+    st.markdown(
+        """
+        <style>
+        .custom-filter-label {
+            display: inline-block;
+            background-color: rgba(120, 155, 0, 0.7);
+            color: #ffffff;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 0px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    # 타이틀 섹션
+    st.markdown(
+            """
+            <style>
+            .custom-title {
+                color: #ffffff; /* 글자 색상 (흰색) */
+                font-weight: bold;
+                display: inline-block;
+                background-color: rgba(120,155,0, 0.7);  /* 흰색 배경, 투명도 50% */
+                padding: 5px 10px;
+                border-radius: 5px;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+    col_filter1, col_filter2 = st.columns(2)
+    with col_filter1:
+        st.markdown('##### <p class="custom-filter-label">자치구 선택</p>', unsafe_allow_html=True)
+        districts = ['전체'] + sorted(df_stores['district'].unique().tolist())
+        selected_district = st.selectbox(
+            '자치구 선택',
+            districts,
+            key='district_filter_tab3',
+            label_visibility="collapsed"
+        )
+
+    with col_filter2:
+        st.markdown('##### <p class="custom-filter-label">매장 유형 선택</p>', unsafe_allow_html=True)
+        store_types = df_stores['타입'].unique().tolist()
+        selected_types = st.multiselect(
+            '매장 유형 선택',
+            store_types,
+            default=store_types,
+            key='store_types_tab3',
+            format_func=lambda x: {
+                'general': '일반 매장',
+                'reserve': '리저브 매장',
+                'generalDT': '드라이브스루 매장',
+                'generalWT': '워크스루 매장'
+            }.get(x, x),
+            label_visibility="collapsed"
+        )
+
+    # 데이터 필터링
+    filtered_stores = df_stores.copy()
+    filtered_reviews = df_review_counts.copy()
+    if selected_district != '전체':
+        filtered_stores = filtered_stores[filtered_stores['district'] == selected_district]
+        filtered_reviews = filtered_reviews[filtered_reviews['District'] == selected_district]
+    filtered_stores = filtered_stores[filtered_stores['타입'].isin(selected_types)]
+
+    # 주요 지표 섹션
+    st.markdown('### <p class="custom-title">📊 주요 지표</p>', unsafe_allow_html=True)
+    metric_cols = st.columns(5)
+
+    # 지표 계산
+    total_stores = len(filtered_stores)
+    total_reviews = filtered_reviews['Visitor_Reviews'].sum() + filtered_reviews['Blog_Reviews'].sum()
+    avg_reviews = total_reviews / len(filtered_reviews) if len(filtered_reviews) > 0 else 0
+    visitor_ratio = filtered_reviews['Visitor_Reviews'].sum() / total_reviews if total_reviews > 0 else 0
+    blog_ratio = filtered_reviews['Blog_Reviews'].sum() / total_reviews if total_reviews > 0 else 0
+
+    with metric_cols[0]:
+        st.metric("매장 수", f"{total_stores:,}")
+    with metric_cols[1]:
+        st.metric("총 리뷰 수", f"{total_reviews:,}")
+    with metric_cols[2]:
+        st.metric("매장당 평균 리뷰", f"{avg_reviews:.1f}")
+    with metric_cols[3]:
+        st.metric("방문자 리뷰 비율", f"{visitor_ratio:.1%}")
+    with metric_cols[4]:
+        st.metric("블로그 리뷰 비율", f"{blog_ratio:.1%}")
+
+    # 메인 컨텐츠 섹션
+    col1, col2 = st.columns([3, 2])
+
+    with col1:
+        st.markdown('### <p class="custom-title">매장 위치 및 리뷰 분포</p>', unsafe_allow_html=True)
+        
+        if selected_district != '전체':
+            center_lat = filtered_stores['위도'].mean()
+            center_lng = filtered_stores['경도'].mean()
+            zoom_level = 13
+        else:
+            center_lat, center_lng = 37.5665, 126.9780
+            zoom_level = 11
+
+        m = folium.Map(
+            location=[center_lat, center_lng],
+            zoom_start=zoom_level,
+            tiles="OpenStreetMap"
+        )
+
+        folium.GeoJson(
+            seoul_geo,
+            style_function=lambda x: {
+                'fillColor': '#00704A' if x['properties']['name'] == selected_district else 'transparent',
+                'color': '#00704A' if x['properties']['name'] == selected_district else '#666666',
+                'weight': 2 if x['properties']['name'] == selected_district else 1,
+                'fillOpacity': 0.2 if x['properties']['name'] == selected_district else 0,
+            }
+        ).add_to(m)
+
+        for idx, row in filtered_stores.iterrows():
+            store_reviews = filtered_reviews[filtered_reviews['Name'] == row['매장명_원본']]
+            total_store_reviews = store_reviews['Visitor_Reviews'].sum() + store_reviews['Blog_Reviews'].sum() if not store_reviews.empty else 0
+            
+            radius = np.log1p(total_store_reviews) * 2 + 5
+            
+            popup_content = f"""
+            <div style="font-family: 'Malgun Gothic', sans-serif;">
+                <b>{row['매장명_원본']}</b><br>
+                <b>유형:</b> {row['타입']}<br>
+                <b>총 리뷰:</b> {total_store_reviews:,}<br>
+                <b>주소:</b> {row['주소']}<br>
+                <b>전화번호:</b> {row['전화번호']}
+            </div>
+            """
+            
+            folium.CircleMarker(
+                location=[row['위도'], row['경도']],
+                radius=radius,
+                popup=folium.Popup(popup_content, max_width=300),
+                color=store_type_colors.get(row['타입'], '#000000'),
+                fill=True,
+                fill_opacity=0.7
+            ).add_to(m)
+
+        st_folium(m, use_container_width=True, height=700)
+
+    with col2:
+        st.markdown('### <p class="custom-title">매장 유형 분포</p>', unsafe_allow_html=True)
+        type_counts = filtered_stores['타입'].value_counts()
+        
+        type_labels = {
+            'general': '일반 매장',
+            'reserve': '리저브 매장',
+            'generalDT': '드라이브스루 매장',
+            'generalWT': '워크스루 매장'
+        }
+        
+        fig_types = px.pie(
+            values=type_counts.values,
+            names=[type_labels.get(t, t) for t in type_counts.index],
+            color_discrete_sequence=['#00704A', '#A6192E', '#FF9900', '#4B3C8C']
+        )
+        fig_types.update_layout(height=300)
+        st.plotly_chart(fig_types, use_container_width=True)
+
+        st.markdown('### <p class="custom-title">직장인구 대비 매장 분포</p>', unsafe_allow_html=True)
+        if selected_district != '전체':
+            district_data = combined_district_data[combined_district_data['district'] == selected_district]
+        else:
+            district_data = combined_district_data
+            
+        fig = px.scatter(
+            district_data,
+            x='total_workers',
+            y='store_count',
+            text='district_name',
+            size='stores_per_10k',
+            labels={
+                'total_workers': '총 직장인구',
+                'store_count': '매장 수',
+                'stores_per_10k': '인구 1만명당 매장 수'
+            }
+        )
+        fig.update_traces(
+            textposition='top center',
+            marker=dict(color='#00704A')
+        )
+        fig.update_layout(height=300)
+        st.plotly_chart(fig, use_container_width=True)
+
+    # 하단 분석 섹션
+    st.markdown("---")
+    
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        st.markdown('### <p class="custom-title">리뷰 분포 분석</p>', unsafe_allow_html=True)
+        if selected_district != '전체':
+            district_data = df_review_counts[df_review_counts['District'] == selected_district]
+        else:
+            district_data = df_review_counts
+            
+        # 리뷰 분포 산점도
+        fig = px.scatter(
+            district_data,
+            x='Visitor_Reviews',
+            y='Blog_Reviews',
+            hover_data=['Name'],
+            color='District' if selected_district == '전체' else None,
+            labels={
+                'Visitor_Reviews': '방문자 리뷰 수',
+                'Blog_Reviews': '블로그 리뷰 수'
+            }
+        )
+        fig.update_traces(marker=dict(size=8))
+        fig.update_layout(height=400)
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col4:
+        st.markdown('### <p class="custom-title">워드클라우드</p>', unsafe_allow_html=True)
+        with st.spinner('워드클라우드 생성 중...'):
+            try:
+                if selected_district != '전체':
+                    word_freq = df_reviews[df_reviews['district'] == selected_district].groupby('word')['count'].sum()
+                else:
+                    word_freq = df_reviews.groupby('word')['count'].sum()
+                word_freq_dict = word_freq.to_dict()
+                if word_freq_dict:
+                    # 기존 플롯 초기화
+                    plt.clf()
+                    # 새로운 figure 생성
+                    fig, ax = plt.subplots(figsize=(10, 5))
+                    # 워드클라우드 생성
+                    wordcloud = generate_wordcloud(word_freq_dict)
+                    # 이미지 표시
+                    ax.imshow(wordcloud, interpolation='bilinear')
+                    ax.axis('off')
+                    # 플롯 표시
+                    st.pyplot(fig)
+                    # figure 닫기
+                    plt.close(fig)
+            except Exception as e:
+                st.error(f"시각화 생성 중 오류가 발생했습니다: {str(e)}")
+# =========================================
+# Tab 4: 음료 분석
+# =========================================
+with tab4:
+    st.markdown(
+        """
+        <style>
+        .custom-filter-label {
+            display: inline-block;
+            background-color: rgba(120, 155, 0, 0.7);
+            color: #ffffff;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    st.markdown('### <p class="custom-title">음료 비교하기</p>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # 스타일이 적용된 라벨을 먼저 표시
+        st.markdown('<p class="custom-filter-label">첫 번째 음료 선택</p>', unsafe_allow_html=True)
+        # selectbox의 실제 라벨은 숨김
+        drink1 = st.selectbox(
+            "첫 번째 음료 선택",  # 접근성을 위해 라벨은 유지
+            df_beverages['메뉴'].unique(),
+            key='drink1_tab4',
+            label_visibility="collapsed"  # 라벨 숨김
+        )
+        drink1_data = df_beverages[df_beverages['메뉴'] == drink1].iloc[0]
+        st.image(drink1_data['이미지_URL'], width=200)
+        st.write(f"**카테고리:** {drink1_data['카테고리']}")
+    
+    with col2:
+        # 스타일이 적용된 라벨을 먼저 표시
+        st.markdown('<p class="custom-filter-label">두 번째 음료 선택</p>', unsafe_allow_html=True)
+        # selectbox의 실제 라벨은 숨김
+        drink2 = st.selectbox(
+            "두 번째 음료 선택",  # 접근성을 위해 라벨은 유지
+            df_beverages['메뉴'].unique(),
+            key='drink2_tab4',
+            label_visibility="collapsed"  # 라벨 숨김
+        )
+        drink2_data = df_beverages[df_beverages['메뉴'] == drink2].iloc[0]
+        st.image(drink2_data['이미지_URL'], width=200)
+        st.write(f"**카테고리:** {drink2_data['카테고리']}")
+
+    nutrients = ['칼로리(Kcal)', '당류(g)', '단백질(g)', '나트륨(mg)', '포화지방(g)', '카페인(mg)']
+    comparison_data = pd.DataFrame({
+        '영양성분': nutrients,
+        drink1: [drink1_data[nutrient] for nutrient in nutrients],
+        drink2: [drink2_data[nutrient] for nutrient in nutrients]
+    })
+    
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        name=drink2,
+        y=comparison_data['영양성분'],
+        x=comparison_data[drink2],
+        orientation='h',
+        marker_color='#FF9900'
+    ))
+    
+    fig.add_trace(go.Bar(
+        name=drink1,
+        y=comparison_data['영양성분'],
+        x=comparison_data[drink1],
+        orientation='h',
+        marker_color='#00704A'
+    ))
+    
+    fig.update_layout(
+        title="영양성분 비교 (*Tall Size 기준)",
+        barmode='group',
+        height=400,
+        margin=dict(l=200),
+        yaxis={'categoryorder':'total ascending'}
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    st.markdown("---")
+    
+    st.markdown('### <p class="custom-title">카테고리별 영양성분 분석</p>', unsafe_allow_html=True)
+    
+    # 스타일이 적용된 라벨을 먼저 표시
+    st.markdown('<p class="custom-filter-label">분석할 영양성분을 선택하세요</p>', unsafe_allow_html=True)
+    # selectbox의 실제 라벨은 숨김
+    selected_nutrient = st.selectbox(
+        "분석할 영양성분을 선택하세요",
+        ["칼로리(Kcal)", "당류(g)", "단백질(g)", "나트륨(mg)", "포화지방(g)", "카페인(mg)"],
+        key='nutrient_selector_tab4',
+        label_visibility="collapsed"
+    )
+    
+    fig = px.box(
+        df_beverages, 
+        x="카테고리", 
+        y=selected_nutrient,
+        color="카테고리",
+        title=f"카테고리별 {selected_nutrient} 분포"
+    )
+    
+    fig.update_layout(
+        showlegend=False,
+        xaxis_tickangle=-45,
+        height=400
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)

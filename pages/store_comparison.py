@@ -9,7 +9,7 @@ from modules.score_utils import load_all_scores, get_scores_from_all_csv  # 모�
 plt.rc('font', family='AppleGothic')
 plt.rcParams['axes.unicode_minus'] = False  # 마이너스 폰트 깨짐 방지
 
-st.set_page_config(page_title="스타벅스 매장 비교", page_icon="🏪", layout="wide")  # 전체 너비 사용
+st.set_page_config(page_title="스타벅스 매장 비교", page_icon="🏪", layout="wide",label_visibility="collapsed")  # 전체 너비 사용
 
 st.markdown("""
     <style>
@@ -197,3 +197,18 @@ for i, (title, labels) in enumerate(chart_info):
 
     except Exception as e:
         st.error(f"⚠️ 데이터 로드 중 오류 발생: {str(e)}")
+
+    # 구분선 추가
+st.markdown("---")
+
+# 돌아가기 버튼
+if st.button("⬅️ 돌아가기"):
+    # 선택된 매장 정보 초기화
+    if 'selected_store_1' in st.session_state:
+        del st.session_state.selected_store_1
+    if 'selected_store_2' in st.session_state:
+        del st.session_state.selected_store_2
+    if 'selected_stores' in st.session_state:
+        st.session_state.selected_stores = []
+    # 메인 페이지로 이동
+    st.switch_page("app.py")
