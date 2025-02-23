@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from store_data import chart_info
 from modules.score_utils import load_all_scores, get_scores_from_all_csv  # 모듈 불러오기
 
-# 한글 폰트 설정
+# 📌 한글 폰트 설정
 plt.rc('font', family='AppleGothic')
 plt.rcParams['axes.unicode_minus'] = False  # 마이너스 폰트 깨짐 방지
 
@@ -43,15 +43,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)  # 기본 패딩 제거 및 카드 스타일 추가
 
-# st.title("📊 스타벅스 매장 상세 분석")
-
 # 선택된 매장 정보 가져오기
 if "selected_store" not in st.session_state:
     st.warning("⚠️ 분석할 매장을 먼저 선택해주세요!")
     st.stop()
 
 store_name = st.session_state.selected_store
-# st.title("📊 스타벅스 매장 상세 분석")
 st.title(f"{store_name} 지점 유형 분석")
 
 
@@ -63,9 +60,7 @@ color_mapping = {
     "카공형": "#96ddfd"
 }
 
-# =========================================
 # 레이더 차트 그리기 (log_score 사용) - 여러 개의 방사형 격자선 추가
-# =========================================
 def plot_radar_chart(title, labels, scores, store_name, color):
     angles = np.linspace(0, 2 * np.pi, len(labels) + 1)
     scores = np.append(scores, scores[0])  # 닫힌 다각형 형성
@@ -124,9 +119,7 @@ def plot_radar_chart(title, labels, scores, store_name, color):
 
     return fig
 
-# =========================================
 # 가장 총점이 높은 유형 선택 + 나머지 유형 한 줄에 표시
-# =========================================
 merged_df, b_values_dict = load_all_scores()
 
 # ✅ 모든 유형별 점수 계산

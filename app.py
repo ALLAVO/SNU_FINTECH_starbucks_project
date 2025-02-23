@@ -653,8 +653,6 @@ with tab2:
         else:
             st.markdown('##### <p class="custom-label">서울 전체 매장 분포도</p>', unsafe_allow_html=True)
 
-        # st.subheader("매장 위치 및 분포")
-
         # 선택된 지역구에 따라 지도 중심 설정
         if selected_district != '전체':
             district_data = df_stores[df_stores['district'] == selected_district]
@@ -718,15 +716,19 @@ with tab2:
             """
 
             # TOP 10 매장은 특별 마커로 표시
+            store_icon_url = "https://img.icons8.com/fluency/48/starbucks.png"
             if is_top10:
-                folium.CircleMarker(
+                # 아이콘 설정
+                icon = folium.CustomIcon(
+                    icon_image=store_icon_url,
+                    icon_size=(48, 48)  # 아이콘 크기 설정
+                )
+
+                # 매장 마커 추가 (이미지 아이콘 적용)
+                folium.Marker(
                     location=[row['위도'], row['경도']],
-                    radius=8,
-                    popup=folium.Popup(popup_content, max_width=300),
-                    color='#D92121',
-                    fill=True,
-                    fill_opacity=0.9,
-                    weight=2
+                    icon=icon,
+                    popup=folium.Popup(popup_content, max_width=300)
                 ).add_to(m)
 
                 # 매장명 라벨 추가
@@ -738,6 +740,7 @@ with tab2:
                         icon_anchor=(75,0)
                     )
                 ).add_to(m)
+
             else:
                 # 일반 매장 마커
                 folium.CircleMarker(
@@ -754,101 +757,108 @@ with tab2:
         # Folium 지도 출력 (Streamlit에서 여백 없이 표시)
         st_folium(m, use_container_width=True, height=700)
 
-    # 오른쪽 컬럼 - 추천 매장 목록 표시
+
+    # 추천 매장 목록 표시
     with col2:
         # {selected_theme} 추천 매장 TOP 10 출력 (배경색 적용)
         st.markdown(
             f'##### <p class="custom-label">{selected_theme} 추천 매장 TOP 10</p>',
             unsafe_allow_html=True
         )
-        # if selected_district != '전체':
-        #     st.markdown(f"*{selected_district} 지역*")
 
         total_scores = get_store_theme_scores(selected_theme, selected_district)
 
         if not total_scores.empty:
             top10 = total_scores.head(10)
 
-            # 표와 체크박스를 위한 컬럼 생성
-            table_col, checkbox_col = st.columns([3, 1])
+            # 선택된 매장 리스트 초기화
+            if 'selected_stores' not in st.session_state:
+                st.session_state.selected_stores = []
 
-            with table_col:
-                # 기존 데이터프레임 표시
-                styled_df = pd.DataFrame({
-                    '매장명': top10['Store'],
-                    '자치구': top10['district'],
-                    '평점': top10['log_score'].round(1)
-                }).reset_index(drop=True)
+            # 데이터프레임 생성 (체크박스 포함)
+            df = pd.DataFrame({
+                '두 매장 비교': [store in st.session_state.selected_stores for store in top10['Store']],
+                '매장명': top10['Store'],
+                '자치구': top10['district'],
+                '평점': top10['log_score'].round(1)
+            }).reset_index(drop=True)
 
-                # 스타일 적용된 데이터프레임
-                st.dataframe(
-                    styled_df,
-                    column_config={
-                        "매장명": st.column_config.TextColumn(
-                            "매장명",
-                            width="medium",
-                        ),
-                        "자치구": st.column_config.TextColumn(
-                            "자치구",
-                            width="small",
-                        ),
-                        "평점": st.column_config.NumberColumn(
-                            "평점",
-                            width="small",
-                            format="%.1f",
-                        )
-                    },
-                    hide_index=True,
-                    use_container_width=True,
-                    height=400
-                )
+            # Streamlit의 data_editor로 표 렌더링 (체크박스 포함)
+            edited_df = st.data_editor(
+                df,
+                column_config={
+                    "두 매장 비교": st.column_config.CheckboxColumn("두 매장 비교"),
+                    "매장명": st.column_config.TextColumn("매장명", width="medium"),
+                    "자치구": st.column_config.TextColumn("자치구", width="small"),
+                    "평점": st.column_config.NumberColumn("평점", width="small", format="%.1f"),
+                },
+                hide_index=True,
+                use_container_width=True,
+                height=400
+            )
 
-            with checkbox_col:
-                st.write("매장 선택")
+        # 선택된 매장 업데이트 (최대 2개까지만 허용)
+        selected_stores = edited_df[edited_df["두 매장 비교"]]["매장명"].tolist()
 
-                # 선택된 매장 리스트 초기화
-                if 'selected_stores' not in st.session_state:
-                    st.session_state.selected_stores = []
+        # 현재 상태를 유지한 채 업데이트 반영
+        if "selected_stores" not in st.session_state:
+            st.session_state.selected_stores = []
 
-                # 각 매장에 대한 체크박스 생성
-                for idx, row in top10.iterrows():
-                    store_name = row['Store']
-                    is_checked = store_name in st.session_state.selected_stores
+        # # 초기 메시지: 두 개의 매장을 선택하도록 유도
+        # if len(selected_stores) < 2:
+        #     st.warning("⚠️ 두 개의 매장을 선택해주세요.")
+        # 초기 메시지: 두 개의 매장을 선택하도록 유도 (투명도 조절)
+        if len(selected_stores) < 2:
+            st.markdown(
+                """
+                <div style="
+                    background-color: rgba(255, 235, 59, 0.7);  /* 연한 노란색 배경 */
+                    padding: 10px;
+                    border-radius: 5px;
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 16px;
+                    color: #856404;  /* 경고색 */
+                    margin-bottom: 20px;  /* 🔹 아래쪽 여백 추가 */
+                ">
+                    📢 [매장 비교] 두 개의 매장을 선택해주세요.
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            st.write("")  # 🔹 빈 줄 추가 (자동 간격 확보)
 
-                    # 체크박스 UI 표시 (최대 2개 제한)
-                    if st.checkbox(
-                        '',
-                        value=is_checked,
-                        key=f"check_{store_name}_{idx}",
-                        disabled=len(st.session_state.selected_stores) >= 2 and store_name not in st.session_state.selected_stores
-                    ):
-                        if store_name not in st.session_state.selected_stores and len(st.session_state.selected_stores) < 2:
-                            st.session_state.selected_stores.append(store_name)
-                        # 이미 2개 선택된 상태에서 다른 항목 선택 시 가장 오래된 선택 해제
-                        elif store_name not in st.session_state.selected_stores:
-                            st.session_state.selected_stores.pop(0)
-                            st.session_state.selected_stores.append(store_name)
-                    elif store_name in st.session_state.selected_stores:
-                        st.session_state.selected_stores.remove(store_name)
+        # 새로운 선택이 기존 선택과 다를 경우만 업데이트
+        if set(selected_stores) != set(st.session_state.selected_stores):
+            if len(selected_stores) > 2:
+                st.error("❌ 최대 2개의 매장만 선택할 수 있습니다. 기존 선택을 해제해주세요.")
+            elif len(selected_stores) == 2:
+                st.session_state.selected_stores = selected_stores
+                st.rerun()  # 두 개가 선택된 경우 UI를 즉시 업데이트
 
-                # 매장 비교하기 버튼
-                if len(st.session_state.selected_stores) == 2:
-                    compare_button = st.button("매장 비교하기", key="compare_btn")
-                    if compare_button:
-                        # 선택된 매장 정보 저장
-                        st.session_state.selected_store_1 = st.session_state.selected_stores[0]
-                        st.session_state.selected_store_2 = st.session_state.selected_stores[1]
-                        # 독립 페이지로 이동
-                        st.switch_page("pages/store_comparison.py")
-                elif len(st.session_state.selected_stores) == 1:
-                    st.info("⚠️ 비교할 매장을 하나 더 선택해주세요.")
-
-        else:
-            st.info("해당 조건에 맞는 매장이 없습니다.")
+        # 매장 비교하기 버튼
+        if len(st.session_state.selected_stores) == 2:
+            compare_button = st.button("매장 비교하기", key="compare_btn")
+            if compare_button:
+                # 선택된 매장 정보 저장
+                st.session_state.selected_store_1 = st.session_state.selected_stores[0]
+                st.session_state.selected_store_2 = st.session_state.selected_stores[1]
+                # 독립 페이지로 이동
+                st.switch_page("pages/store_comparison.py")
 
         # 평점 설명
         st.markdown("""
-        ---
-        * 평점은 각 유형별 키워드 분석을 통해 산출된 점수입니다.
-        * 높은 점수일수록 해당 유형에 적합한 매장입니다.
-        """)
+            <div style="
+                background-color: rgba(0, 235, 59, 0.7);  /* 연한 초록색 배경 */
+                padding: 15px;
+                border-radius: 8px;
+                text-align: center;
+                font-weight: 900;  /* 글씨 더 두껍게 */
+                font-size: 20px;  /* 글씨 크기 증가 */
+                color: #ffffff;  /* 흰색 텍스트 */
+                line-height: 1.8;  /* 줄 간격 조정 */
+            ">
+                <span style="display: block; margin-bottom: 10px;">⭐ 평점은 각 유형별 키워드 분석을 통해 산출된 점수입니다.</span>
+                <span style="display: block;">⭐ 높은 점수일수록 해당 유형에 적합한 매장입니다.</span>
+            </div>
+        """, unsafe_allow_html=True)
