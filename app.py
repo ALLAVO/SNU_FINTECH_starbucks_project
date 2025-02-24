@@ -1145,7 +1145,7 @@ with tab3:
             district_data = df_review_counts[df_review_counts['District'] == selected_district]
         else:
             district_data = df_review_counts
-            
+        
         # 리뷰 분포 산점도
         fig = px.scatter(
             district_data,
@@ -1163,12 +1163,13 @@ with tab3:
         st.plotly_chart(fig, use_container_width=True)
 
     with col4:
-        st.markdown('### <p class="custom-title">워드클라우드</p>', unsafe_allow_html=True)
+        st.markdown('### <p class="custom-title">자치구별 TOP 매장 워드클라우드</p>', unsafe_allow_html=True)
         with st.spinner('워드클라우드 생성 중...'):
             try:
                 if selected_district != '전체':
                     word_freq = df_reviews[df_reviews['district'] == selected_district].groupby('word')['count'].sum()
                 else:
+                    st.markdown(f'#### <p class="custom-title"> {store_name} 리뷰 키워드</p>', unsafe_allow_html=True)
                     word_freq = df_reviews.groupby('word')['count'].sum()
                 word_freq_dict = word_freq.to_dict()
                 if word_freq_dict:

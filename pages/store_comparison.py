@@ -9,7 +9,7 @@ from modules.score_utils import load_all_scores, get_scores_from_all_csv  # 모�
 plt.rc('font', family='AppleGothic')
 plt.rcParams['axes.unicode_minus'] = False  # 마이너스 폰트 깨짐 방지
 
-st.set_page_config(page_title="스타벅스 매장 비교", page_icon="🏪", layout="wide",label_visibility="collapsed")  # 전체 너비 사용
+st.set_page_config(page_title="스타벅스 매장 비교", page_icon="🏪", layout="wide", initial_sidebar_state="collapsed")  # 전체 너비 사용
 
 st.markdown("""
     <style>
