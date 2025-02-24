@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 from store_data import chart_info
 from modules.score_utils import load_all_scores, get_scores_from_all_csv  # 모듈 불러오기
 
@@ -9,7 +8,12 @@ from modules.score_utils import load_all_scores, get_scores_from_all_csv  # 모�
 plt.rc('font', family='AppleGothic')
 plt.rcParams['axes.unicode_minus'] = False  # 마이너스 폰트 깨짐 방지
 
-st.set_page_config(page_title="스타벅스 매장 비교", page_icon="🏪", layout="wide")  # 전체 너비 사용
+# 📌 웹페이지 기본 설정
+st.set_page_config(
+    layout="wide",
+    page_title='스타벅스 매장 비교',
+    page_icon="https://img.icons8.com/fluency/48/starbucks.png",
+)
 
 st.markdown("""
     <style>

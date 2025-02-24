@@ -4,7 +4,6 @@
 import glob
 import os
 import math
-# from store_data import chart_info
 import pandas as pd
 import numpy as np
 
