@@ -1163,15 +1163,23 @@ with tab3:
         st.plotly_chart(fig, use_container_width=True)
 
     with col4:
-        st.markdown('### <p class="custom-title">자치구별 TOP 매장 워드클라우드</p>', unsafe_allow_html=True)
         with st.spinner('워드클라우드 생성 중...'):
             try:
                 if selected_district != '전체':
-                    word_freq = df_reviews[df_reviews['district'] == selected_district].groupby('word')['count'].sum()
+                    district_data = df_reviews[df_reviews['district'] == selected_district]
+                    word_freq = district_data.groupby('word')['count'].sum()
+                    store_name = district_data['store_name'].iloc[0]  # 해당 자치구의 TOP 매장
+                    
+                    st.markdown(
+                        f'#### <p class="custom-title">{selected_district} TOP 매장: {store_name} 리뷰 키워드</p>', 
+                        unsafe_allow_html=True
+                    )
                 else:
-                    st.markdown(f'#### <p class="custom-title"> {store_name} 리뷰 키워드</p>', unsafe_allow_html=True)
                     word_freq = df_reviews.groupby('word')['count'].sum()
+                    st.markdown('### <p class="custom-title">전체 매장 워드클라우드</p>', unsafe_allow_html=True)
+                
                 word_freq_dict = word_freq.to_dict()
+                
                 if word_freq_dict:
                     # 기존 플롯 초기화
                     plt.clf()
@@ -1186,6 +1194,9 @@ with tab3:
                     st.pyplot(fig)
                     # figure 닫기
                     plt.close(fig)
+                else:
+                    st.info("표시할 리뷰 데이터가 없습니다.")
+                    
             except Exception as e:
                 st.error(f"시각화 생성 중 오류가 발생했습니다: {str(e)}")
 # =========================================
