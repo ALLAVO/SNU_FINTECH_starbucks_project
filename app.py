@@ -826,11 +826,154 @@ with tab2:
                 ).add_to(m)
 
         st_folium(m, use_container_width=True, height=700)
-
-    # 추천 매장 목록 표시
+    #
+    # # 추천 매장 목록 표시
+    # with col2:
+    #     # 페이지가 새로 로드되면 선택된 매장 리스트 초기화
+    #     if "selected_stores" not in st.session_state or "selected_store" in st.session_state:
+    #         st.session_state.selected_stores = []
+    #
+    #     # {selected_theme} 추천 매장 TOP 9 출력
+    #     st.markdown(
+    #         f'##### <p class="custom-label">{selected_theme} 추천 매장 TOP 9</p>',
+    #         unsafe_allow_html=True
+    #     )
+    #
+    #     total_scores = get_store_theme_scores(selected_theme, selected_district)
+    #
+    #     if not total_scores.empty:
+    #         top9 = total_scores.head(9)
+    #
+    #         # 선택된 매장 리스트 초기화
+    #         if "selected_stores" not in st.session_state:
+    #             st.session_state.selected_stores = []
+    #
+    #         selected_stores = st.session_state.selected_stores.copy()  # 현재 선택된 매장 복사
+    #
+    #         # 매장 목록을 3개씩 나누어 카드 형태로 표시
+    #         for i in range(0, len(top9), 3):
+    #             row_stores = top9.iloc[i:i+3]
+    #             cols = st.columns(3)
+    #
+    #             # 두 번째 행부터 간격 추가
+    #             margin_top = "30px" if i >= 3 else "14px"
+    #
+    #             for j in range(len(row_stores)):
+    #                 with cols[j]:
+    #                     store = row_stores.iloc[j]
+    #                     store_name = store["Store"]
+    #                     is_selected = store_name in selected_stores
+    #
+    #                     # 선택된 매장인지에 따라 카드 배경색 변경
+    #                     card_bg = "#6CCD9C" if is_selected else "#d1e7dd"
+    #                     button_text = "🎯 비교 매장 선택 해제" if is_selected else "비교 매장으로 선택"
+    #
+    #                     st.markdown(
+    #                         f"""
+    #                         <div style="
+    #                             padding: 15px;
+    #                             border-radius: 12px;
+    #                             background-color: {card_bg};
+    #                             margin-bottom: 14px;
+    #                             margin-top: {margin_top};  /* 두 번째 행부터 간격 추가 */
+    #                             text-align: center;
+    #                             display: flex;
+    #                             flex-direction: column;
+    #                             justify-content: center;
+    #                             align-items: center;
+    #                             transition: all 0.3s ease;  /* 부드러운 전환 효과 */
+    #                         ">
+    #                             <p style="margin: 0; color: #333; font-size: 25px; font-weight: bold;">{store_name}</p>
+    #                             <p style="margin: 5px 0 0; color: #666; font-weight: bold;">자치구: {store["district"]}</p>
+    #                             <p style="margin: 2px 0 0; color: #666; font-weight: bold;">평점: <b>{store["log_score"]:.1f}</b></p>
+    #                         </div>
+    #                         """,
+    #                         unsafe_allow_html=True
+    #                     )
+    #
+    #
+    #                     # 비교 매장 선택 버튼 (카드 위에 배치)
+    #                     if st.button("🎯 비교하기" if not is_selected else "✅ 선택됨", key=f"compare_{store_name}"):
+    #                         if is_selected:
+    #                             selected_stores.remove(store_name)
+    #                         elif len(selected_stores) < 2:
+    #                             selected_stores.append(store_name)
+    #                         else:
+    #                             st.warning("최대 2개 매장만 선택할 수 있습니다.")
+    #
+    #                         # 선택된 매장 리스트를 세션 상태에 저장
+    #                         st.session_state.selected_stores = selected_stores
+    #
+    #                         # UI 즉시 업데이트
+    #                         st.rerun()
+    #
+    #                     # 분석하기 버튼 추가
+    #                     if st.button(f"📊 {store_name} 분석", key=f"analyze_{store_name}"):
+    #                         st.session_state.selected_store = store_name
+    #                         st.switch_page("pages/store_detail.py")
+    #
+    #
+    #     # # 초기 메시지: 두 개의 매장을 선택하도록 유도
+    #     # if len(selected_stores) < 2:
+    #     #     st.warning("⚠️ 두 개의 매장을 선택해주세요.")
+    #     # 초기 메시지: 두 개의 매장을 선택하도록 유도 (투명도 조절)
+    #     if len(selected_stores) < 2:
+    #         st.markdown(
+    #             """
+    #             <div style="
+    #                 background-color: rgba(255, 235, 59, 0.7);  /* 연한 노란색 배경 */
+    #                 padding: 10px;
+    #                 border-radius: 5px;
+    #                 text-align: center;
+    #                 font-weight: bold;
+    #                 font-size: 16px;
+    #                 color: #856404;  /* 경고색 */
+    #                 margin-bottom: 20px;  /* 🔹 아래쪽 여백 추가 */
+    #             ">
+    #                 📢 [매장 비교] 두 개의 매장을 선택해주세요.
+    #             </div>
+    #             """,
+    #             unsafe_allow_html=True
+    #         )
+    #         st.write("")  # 🔹 빈 줄 추가 (자동 간격 확보)
+    #
+    #     # 새로운 선택이 기존 선택과 다를 경우만 업데이트
+    #     if set(selected_stores) != set(st.session_state.selected_stores):
+    #         if len(selected_stores) > 2:
+    #             st.error("❌ 최대 2개의 매장만 선택할 수 있습니다. 기존 선택을 해제해주세요.")
+    #         elif len(selected_stores) == 2:
+    #             st.session_state.selected_stores = selected_stores
+    #             st.rerun()  # 두 개가 선택된 경우 UI를 즉시 업데이트
+    #
+    #     # 매장 비교하기 버튼
+    #     if len(st.session_state.selected_stores) == 2:
+    #         compare_button = st.button("매장 비교하기", key="compare_btn")
+    #         if compare_button:
+    #             # 선택된 매장 정보 저장
+    #             st.session_state.selected_store_1 = st.session_state.selected_stores[0]
+    #             st.session_state.selected_store_2 = st.session_state.selected_stores[1]
+    #             # 독립 페이지로 이동
+    #             st.switch_page("pages/store_comparison.py")
+    #
+    #     # 평점 설명
+    #     st.markdown("""
+    #         <div style="
+    #             background-color: rgba(0, 235, 59, 0.7);  /* 연한 초록색 배경 */
+    #             padding: 15px;
+    #             border-radius: 8px;
+    #             text-align: center;
+    #             font-weight: 900;  /* 글씨 더 두껍게 */
+    #             font-size: 20px;  /* 글씨 크기 증가 */
+    #             color: #ffffff;  /* 흰색 텍스트 */
+    #             line-height: 1.8;  /* 줄 간격 조정 */
+    #         ">
+    #             <span style="display: block; margin-bottom: 10px;">⭐ 평점은 각 유형별 키워드 분석을 통해 산출된 점수입니다.</span>
+    #             <span style="display: block;">⭐ 높은 점수일수록 해당 유형에 적합한 매장입니다.</span>
+    #         </div>
+    #     """, unsafe_allow_html=True)
     with col2:
         # 페이지가 새로 로드되면 선택된 매장 리스트 초기화
-        if "selected_stores" not in st.session_state or "selected_store" in st.session_state:
+        if "selected_stores" not in st.session_state:
             st.session_state.selected_stores = []
 
         # {selected_theme} 추천 매장 TOP 9 출력
@@ -843,11 +986,6 @@ with tab2:
 
         if not total_scores.empty:
             top9 = total_scores.head(9)
-
-            # 선택된 매장 리스트 초기화
-            if "selected_stores" not in st.session_state:
-                st.session_state.selected_stores = []
-
             selected_stores = st.session_state.selected_stores.copy()  # 현재 선택된 매장 복사
 
             # 매장 목록을 3개씩 나누어 카드 형태로 표시
@@ -866,7 +1004,6 @@ with tab2:
 
                         # 선택된 매장인지에 따라 카드 배경색 변경
                         card_bg = "#6CCD9C" if is_selected else "#d1e7dd"
-                        button_text = "🎯 비교 매장 선택 해제" if is_selected else "비교 매장으로 선택"
 
                         st.markdown(
                             f"""
@@ -875,13 +1012,13 @@ with tab2:
                                 border-radius: 12px; 
                                 background-color: {card_bg};
                                 margin-bottom: 14px; 
-                                margin-top: {margin_top};  /* 두 번째 행부터 간격 추가 */
+                                margin-top: {margin_top};  
                                 text-align: center;
                                 display: flex; 
                                 flex-direction: column; 
                                 justify-content: center; 
                                 align-items: center;
-                                transition: all 0.3s ease;  /* 부드러운 전환 효과 */
+                                transition: all 0.3s ease;
                             ">
                                 <p style="margin: 0; color: #333; font-size: 25px; font-weight: bold;">{store_name}</p>
                                 <p style="margin: 5px 0 0; color: #666; font-weight: bold;">자치구: {store["district"]}</p>
@@ -891,20 +1028,17 @@ with tab2:
                             unsafe_allow_html=True
                         )
 
-
-                        # 비교 매장 선택 버튼 (카드 위에 배치)
+                        # 비교 매장 선택 버튼
                         if st.button("🎯 비교하기" if not is_selected else "✅ 선택됨", key=f"compare_{store_name}"):
                             if is_selected:
                                 selected_stores.remove(store_name)
                             elif len(selected_stores) < 2:
                                 selected_stores.append(store_name)
                             else:
-                                st.warning("최대 2개 매장만 선택할 수 있습니다.")
+                                st.warning("⚠️ 최대 2개 매장만 선택할 수 있습니다.")
 
-                            # 선택된 매장 리스트를 세션 상태에 저장
-                            st.session_state.selected_stores = selected_stores
-
-                            # UI 즉시 업데이트
+                            # 선택된 매장 리스트를 세션 상태에 저장 후 즉시 UI 업데이트
+                            st.session_state.selected_stores = selected_stores.copy()
                             st.rerun()
 
                         # 분석하기 버튼 추가
@@ -912,38 +1046,33 @@ with tab2:
                             st.session_state.selected_store = store_name
                             st.switch_page("pages/store_detail.py")
 
-
-        # # 초기 메시지: 두 개의 매장을 선택하도록 유도
-        # if len(selected_stores) < 2:
-        #     st.warning("⚠️ 두 개의 매장을 선택해주세요.")
-        # 초기 메시지: 두 개의 매장을 선택하도록 유도 (투명도 조절)
-        if len(selected_stores) < 2:
+        # 매장 선택 유도 메시지 (투명도 조절)
+        if len(st.session_state.selected_stores) < 2:
             st.markdown(
                 """
                 <div style="
-                    background-color: rgba(255, 235, 59, 0.7);  /* 연한 노란색 배경 */
+                    background-color: rgba(255, 235, 59, 0.7);  
                     padding: 10px;
                     border-radius: 5px;
                     text-align: center;
                     font-weight: bold;
                     font-size: 16px;
-                    color: #856404;  /* 경고색 */
-                    margin-bottom: 20px;  /* 🔹 아래쪽 여백 추가 */
+                    color: #856404;  
+                    margin-bottom: 20px;
                 ">
                     📢 [매장 비교] 두 개의 매장을 선택해주세요.
                 </div>
                 """,
                 unsafe_allow_html=True
             )
-            st.write("")  # 🔹 빈 줄 추가 (자동 간격 확보)
 
-        # 새로운 선택이 기존 선택과 다를 경우만 업데이트
-        if set(selected_stores) != set(st.session_state.selected_stores):
+        # 선택된 매장이 변경되었을 때 UI 업데이트
+        if set(st.session_state.selected_stores) != set(selected_stores):
             if len(selected_stores) > 2:
                 st.error("❌ 최대 2개의 매장만 선택할 수 있습니다. 기존 선택을 해제해주세요.")
             elif len(selected_stores) == 2:
-                st.session_state.selected_stores = selected_stores
-                st.rerun()  # 두 개가 선택된 경우 UI를 즉시 업데이트
+                st.session_state.selected_stores = selected_stores.copy()
+                st.rerun()
 
         # 매장 비교하기 버튼
         if len(st.session_state.selected_stores) == 2:
@@ -955,23 +1084,23 @@ with tab2:
                 # 독립 페이지로 이동
                 st.switch_page("pages/store_comparison.py")
 
+
         # 평점 설명
         st.markdown("""
             <div style="
-                background-color: rgba(0, 235, 59, 0.7);  /* 연한 초록색 배경 */
+                background-color: rgba(0, 235, 59, 0.7);
                 padding: 15px;
                 border-radius: 8px;
                 text-align: center;
-                font-weight: 900;  /* 글씨 더 두껍게 */
-                font-size: 20px;  /* 글씨 크기 증가 */
-                color: #ffffff;  /* 흰색 텍스트 */
-                line-height: 1.8;  /* 줄 간격 조정 */
+                font-weight: 900;
+                font-size: 20px;
+                color: #ffffff;
+                line-height: 1.8;
             ">
                 <span style="display: block; margin-bottom: 10px;">⭐ 평점은 각 유형별 키워드 분석을 통해 산출된 점수입니다.</span>
                 <span style="display: block;">⭐ 높은 점수일수록 해당 유형에 적합한 매장입니다.</span>
             </div>
         """, unsafe_allow_html=True)
-
 
 # 📌 Tab 3: 매장 분석
 with tab3:
