@@ -11,3 +11,4 @@ pyvis
 google-generativeai
 google-auth
 protobuf
+Markdown
