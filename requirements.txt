@@ -3,16 +3,10 @@ pandas
 matplotlib
 folium
 streamlit-folium
-jsonlib
-streamlit-components
 requests
 plotly
 wordcloud
 pyvis
 numpy
 google-generativeai
-json
-io
-base64
 markdown
-functools
