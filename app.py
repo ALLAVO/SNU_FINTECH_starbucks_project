@@ -444,11 +444,11 @@ st.markdown(
 
     /* ✅ 4. 메인 컨테이너 투명도 및 블러 효과 (.main) */
     .main {
-        background-color: rgba(255, 255, 255, 0.7) !important; /* 배경색 (흰색, 투명도 70%) */
+        background-color: rgba(255, 255, 255, 0.35) !important; /* 배경색*/
         backdrop-filter: blur(6px); /* 블러 효과 */
         padding: 1rem; /* 내부 여백 */
         border-radius: 8px; /* 모서리 둥글게 */
-    }   
+    }
 
     /* ✅ 5. 페이지 제목 스타일 (.title-center)
     페이지 제목 스타일 */
@@ -1650,9 +1650,6 @@ with tab3:
             # ✅ Streamlit에 차트 표시
             st.plotly_chart(fig, use_container_width=True)
         
-    
-    # Sub tab 2: 리뷰 분석
-    # Sub tab 2: 리뷰 분석
     # Sub tab 2: 리뷰 분석
     with analysis_tab2:
         # 필터 섹션
@@ -2360,7 +2357,6 @@ with tab3:
         )
 
         st.plotly_chart(fig, use_container_width=True)
-
 
 with tab4:
     # 🎨 스타일 적용 (카드 및 버튼 호버 효과 추가)

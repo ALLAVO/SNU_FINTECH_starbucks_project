@@ -10,6 +10,8 @@ import markdown
 from datetime import datetime
 from functools import lru_cache
 from store_data import chart_info
+# score_utils 모듈 import
+from modules.score_utils import load_all_scores, get_scores_from_all_csv
 
 class StarbucksGeminiChatbot:
     def __init__(self):
@@ -20,6 +22,8 @@ class StarbucksGeminiChatbot:
         self.theme_info = dict(chart_info)
         self.system_prompt = self.create_system_prompt()
         self.chat = self.model.start_chat(history=[])
+        # score_utils에서 로드한 데이터
+        self.scores_df, self.b_values = load_all_scores()
 
     @lru_cache(maxsize=32)
     def load_all_data(self):
@@ -28,7 +32,7 @@ class StarbucksGeminiChatbot:
             'stores': pd.read_csv('data/starbucks_seoul_all_store_info.csv'),
             'reviews': pd.read_csv('data/cleaned_starbucks_reviews_with_counts.csv'),
             'store_reviews': pd.read_csv('data/스타벅스_리뷰_500개.csv'),
-            'beverages': pd.read_csv('data/starbucks_nutrition_with_images.csv'),  # 키 이름 수정
+            'beverages': pd.read_csv('data/starbucks_nutrition_with_images.csv'),
             '내향형': pd.read_csv('hexa_point_data/내향형_테마_키워드_매장별_Theme_score.csv'),
             '외향형': pd.read_csv('hexa_point_data/외향형_테마_키워드_매장별_Theme_score.csv'),
             '수다형': pd.read_csv('hexa_point_data/수다형_테마_키워드_매장별_Theme_score.csv'),
@@ -45,23 +49,16 @@ class StarbucksGeminiChatbot:
         return data
 
     def plot_radar_chart(self, store_name, personality_type):
-        """레이더 차트 그리기"""
+        """레이더 차트 그리기 (score_utils의 log_score 사용)"""
         angles = np.linspace(0, 2 * np.pi, len(self.theme_info[personality_type]) + 1)
         
-        fig, ax = plt.subplots(figsize=(4, 4), subplot_kw={'projection': 'polar'})
+        fig, ax = plt.subplots(figsize=(3, 3), subplot_kw={'projection': 'polar'})
         ax.spines['polar'].set_visible(False)
         ax.grid(False)
         
-        # 데이터 준비
-        df = self.data[personality_type]
-        store_data = df[df['Store'] == store_name]
-        scores = []
+        # 데이터 준비 (get_scores_from_all_csv 함수 사용)
         labels = self.theme_info[personality_type]
-        
-        for theme in labels:
-            score = store_data[store_data['Theme'] == theme]['final_theme_score'].values
-            scores.append(score[0] if len(score) > 0 else 0)
-        
+        scores = get_scores_from_all_csv(store_name, labels, personality_type)
         scores = np.append(scores, scores[0])  # 닫힌 다각형 형성
         
         # 색상 매핑
@@ -121,7 +118,7 @@ class StarbucksGeminiChatbot:
         return f"data:image/png;base64,{img_str}"
 
     def get_store_analysis(self, store_name):
-        """매장 종합 분석"""
+        """매장 종합 분석 (score_utils 사용)"""
         analysis = {
             'personality_scores': {},
             'theme_scores': {},
@@ -131,50 +128,76 @@ class StarbucksGeminiChatbot:
             ]['review_text'].tolist()
         }
         
-        # 성향별 점수 계산
+        # 성향별 점수 계산 (score_utils 사용)
         for p_type in ['내향형', '외향형', '수다형', '카공형']:
-            df = self.data[p_type]
-            store_data = df[df['Store'] == store_name]
-            analysis['personality_scores'][p_type] = store_data['final_theme_score'].sum()
-            analysis['theme_scores'][p_type] = store_data.set_index('Theme')['final_theme_score'].to_dict()
+            labels = self.theme_info[p_type]
+            log_scores = get_scores_from_all_csv(store_name, labels, p_type)
+            
+            # 총점 저장
+            analysis['personality_scores'][p_type] = log_scores.sum()
+            
+            # 테마별 점수 저장
+            theme_scores = {}
+            for i, theme in enumerate(labels):
+                theme_scores[theme] = log_scores[i]
+            analysis['theme_scores'][p_type] = theme_scores
         
         return analysis
 
     @lru_cache(maxsize=32)
     def get_personality_recommendation(self, personality_type, district=None):
-        """개인 특성별 매장 추천"""
+        """개인 특성별 매장 추천 (score_utils 사용)"""
         if personality_type not in ['내향형', '외향형', '수다형', '카공형']:
             return None
             
         df = self.data[personality_type]
         stores_df = self.data['stores']
         
+        # 지역구 필터링
         if district:
             district = district.replace("구", "") + "구"
             stores_in_district = stores_df[stores_df['district'] == district]['매장명'].tolist()
-            df = df[df['Store'].isin(stores_in_district)]
+            # score_utils가 사용하는 이름 형식으로 필터링
+            filtered_df = self.scores_df[
+                (self.scores_df['FileName'].str.contains(personality_type)) & 
+                (self.scores_df['Store'].isin(stores_in_district))
+            ]
+        else:
+            filtered_df = self.scores_df[self.scores_df['FileName'].str.contains(personality_type)]
         
-        store_scores = df.groupby('Store')['final_theme_score'].sum().sort_values(ascending=False)
+        # 매장별 총점 계산
+        store_scores = filtered_df.groupby('Store')['log_score'].sum().sort_values(ascending=False)
         
         recommendations = []
         for store in store_scores.head().index:
-            store_data = df[df['Store'] == store]
-            store_info = stores_df[stores_df['매장명'] == store].iloc[0]
+            # 테마별 점수 가져오기
+            labels = self.theme_info[personality_type]
+            log_scores = get_scores_from_all_csv(store, labels, personality_type)
             
-            recommendations.append({
-                'store': store,
-                'total_score': store_scores[store],
-                'top_themes': [f"{row['Theme']}({row['final_theme_score']:.1f}점)" 
-                             for _, row in store_data.nlargest(3, 'final_theme_score').iterrows()],
-                'keywords': [f"{k}({v}회)" for k, v in sorted(
-                    self.data['store_keywords'].get(store, {}).items(), 
-                    key=lambda x: x[1], 
-                    reverse=True
-                )[:3]],
-                'address': store_info['주소']
-            })
+            # 테마별 점수 정렬
+            theme_scores = {theme: score for theme, score in zip(labels, log_scores)}
+            top_themes = sorted(theme_scores.items(), key=lambda x: x[1], reverse=True)
+            
+            # 매장 정보 가져오기
+            store_info = stores_df[stores_df['매장명'] == store]
+            if not store_info.empty:
+                store_info = store_info.iloc[0]
+                
+                recommendations.append({
+                    'store': store,
+                    'total_score': store_scores[store],
+                    'top_themes': [f"{theme}({score:.1f}점)" for theme, score in top_themes[:3]],
+                    'keywords': [f"{k}({v}회)" for k, v in sorted(
+                        self.data['store_keywords'].get(store, {}).items(), 
+                        key=lambda x: x[1], 
+                        reverse=True
+                    )[:3]],
+                    'address': store_info['주소']
+                })
             
         return recommendations
+
+    # create_system_prompt 함수의 일부분만 수정
 
     def create_system_prompt(self):
         """시스템 프롬프트 생성"""
@@ -185,38 +208,40 @@ class StarbucksGeminiChatbot:
             for p_type, themes in self.theme_info.items()
         ]
 
-        return f"""당신은 스타벅스 매장 분석 전문가입니다. 각 매장의 특성과 데이터를 바탕으로 맞춤형 추천과 분석을 제공합니다.
+        return f"""당신은 스타봇스 (스타벅스 매장 분석 전문가) 입니다. 각 매장의 특성과 데이터를 바탕으로 맞춤형 추천과 분석을 제공합니다.
 
-보유 데이터:
-1. 매장 정보: 서울시 633개 매장의 위치, 유형, 특성 데이터
-2. 리뷰 데이터: 실제 방문자들의 리뷰와 평가
-3. 성향별 테마 점수: 각 매장의 테마별 상세 평가 점수
-4. 키워드 분석: 매장별 주요 키워드와 언급 빈도
-5. 음료 데이터: 각 음료별 영양성분과 이미지 URL 데이터
+    보유 데이터:
+    1. 매장 정보: 서울시 633개 매장의 위치, 유형, 특성 데이터
+    2. 리뷰 데이터: 실제 방문자들의 리뷰와 평가
+    3. 성향별 테마 점수: 각 매장의 테마별 상세 평가 점수
+    4. 키워드 분석: 매장별 주요 키워드와 언급 빈도
+    5. 음료 데이터: 각 음료별 영양성분과 이미지 URL 데이터
 
-성향별 특성:
-{chr(10).join(personality_info)}
+    성향별 특성:
+    {chr(10).join(personality_info)}
 
-답변 작성 가이드:
-기본 스타일: 친근한 20대 여성 안내원 말투
-1. 매장 추천 시:
-   - 추천 이유를 테마 점수와 함께 설명
-   - 실제 리뷰나 키워드를 인용하여 설명
-   - 해당 성향에 특히 적합한 이유 설명
+    답변 작성 가이드:
+    기본 스타일: 친근한 20대 여성 안내원 말투
+    1. 매장 추천 시:
+    - 추천 이유를 테마 점수와 함께 설명
+    - 실제 리뷰나 키워드를 인용하여 설명
+    - 해당 성향에 특히 적합한 이유 설명
 
-2. 매장 분석 시:
-   - 강점과 특징을 수치로 제시
-   - 가장 높은 점수의 테마 강조
-   - 실제 방문자 리뷰 인용
+    2. 매장 분석 시:
+    - 강점과 특징을 수치로 제시
+    - 가장 높은 점수의 테마 강조
+    - 실제 방문자 리뷰 인용
 
-응답 형식:
-- 마크다운 형식을 사용하여 응답합니다.
-- 볼드체(**), 이탤릭체(*), 제목(#) 등을 적절히 사용합니다.
-- 중요한 키워드와 수치는 **볼드체**로 강조합니다.
-- 리스트 항목은 * 또는 -으로 표시합니다.
+    응답 형식:
+    - 마크다운 형식을 사용하여 응답합니다.
+    - 볼드체(**), 이탤릭체(*), 제목(#) 등을 적절히 사용합니다.
+    - 중요한 키워드와 수치는 **볼드체**로 강조합니다.
+    - 리스트 항목은 * 또는 -으로 표시합니다.
+    - 마크다운 표(|---|---|) 형식은 사용하지 마세요. 대신 텍스트로 점수를 설명해주세요.
+    - 점수 비교 시 '가상의 테마 점수 차트'와 같은 표 형식은 사용하지 말고, 텍스트로 주요 점수만 언급해주세요.
 
-시각화 참고:
-각 답변에는 관련 테마 점수 차트가 함께 제공됩니다."""
+    시각화 참고:
+    각 답변에는 관련 테마 점수 차트가 함께 제공됩니다. 따라서 표 형식의 점수 비교는 필요하지 않습니다."""
 
     def _get_personality_description(self, personality_type):
         """성향별 특성 설명"""
@@ -230,7 +255,7 @@ class StarbucksGeminiChatbot:
         
     def get_beverage_recommendations(self, query):
         """음료 추천 및 분석"""
-        beverages_df = self.data['beverages']  # 키 이름 수정
+        beverages_df = self.data['beverages']
         
         # 쿼리 키워드 분석
         is_low_caffeine = any(word in query.lower() for word in ['저카페인', '카페인 적은', '카페인이 적은'])
@@ -548,7 +573,7 @@ def main():
             # AI 응답 표시
             st.markdown(f"""
                 <div class="chat-message assistant-message">
-                    <div>☕️ 스타벅스 분석가</div>
+                    <div>☕️스타봇스🤖</div>
                     {formatted_text}
                 </div>
             """, unsafe_allow_html=True)
@@ -557,11 +582,24 @@ def main():
             if message["content"].get("charts"):
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
                 
-                col1, col2 = st.columns([1, 1])
+                cols = st.columns(3)  # 3개의 컬럼 생성
                 for i, chart in enumerate(message["content"]["charts"]):
-                    with col1 if i % 2 == 0 else col2:
-                        st.markdown(f"### {chart['title']}")
+                    with cols[i % 3]:  # 3개의 컬럼에 순차적으로 배치
+                        st.markdown(f"<h4 style='text-align: center;'>{chart['title']}</h4>", unsafe_allow_html=True)
                         st.markdown(f'<img src="{chart["image"]}" width="100%">', unsafe_allow_html=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+            # 음료 이미지 표시
+            if message["content"].get("beverage_images"):
+                st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+                st.markdown("### 추천 음료")
+                
+                cols = st.columns(len(message["content"]["beverage_images"]))
+                for i, beverage in enumerate(message["content"]["beverage_images"]):
+                    with cols[i]:
+                        st.markdown(f"**{beverage['name']}**")
+                        st.image(beverage['url'], width=200)
                 
                 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -573,7 +611,7 @@ def main():
         st.session_state.messages.append({"role": "user", "content": user_input})
         
         # 챗봇 응답 생성
-        with st.spinner("AI가 답변을 분석하고 있습니다..."):
+        with st.spinner("스타봇스가 답변을 생각하고 있습니다..."):
             response = st.session_state.gemini_chatbot.get_answer(user_input)
         
         # 챗봇 응답 저장
@@ -587,4 +625,3 @@ if __name__ == "__main__":
     plt.rc('font', family='AppleGothic')
     plt.rcParams['axes.unicode_minus'] = False
     main()
-
