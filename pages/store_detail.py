@@ -209,5 +209,5 @@ for i, title in enumerate(remaining_types):
         st.markdown(f"<p style='text-align: center; font-weight: bold;'>총점: {total:.2f}</p>", unsafe_allow_html=True)
 
 # 뒤로 가기 버튼
-if st.button("⬅️ 돌아가기"):
+if st.button("HOME"):
     st.switch_page("app.py")

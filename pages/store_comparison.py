@@ -202,7 +202,7 @@ for i, (title, labels) in enumerate(chart_info):
 st.markdown("---")
 
 # 돌아가기 버튼
-if st.button("⬅️ 돌아가기"):
+if st.button("HOME"):
     # 선택된 매장 정보 초기화
     if 'selected_store_1' in st.session_state:
         del st.session_state.selected_store_1
