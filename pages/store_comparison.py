@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 from store_data import chart_info
 from modules.score_utils import load_all_scores, get_scores_from_all_csv  # 모듈 불러오기
 
