@@ -2364,4 +2364,4 @@ with tab4:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🚀 스타벅스 AI 챗봇 열기", use_container_width=True):
-            st.switch_page("pages/starbucks_chatbot.py")
+            st.switch_page("pages/chatbot.py")

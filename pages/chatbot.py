@@ -29,21 +29,21 @@ class StarbucksGeminiChatbot:
     def load_all_data(self):
         """데이터 로드 및 전처리"""
         data = {
-            'stores': pd.read_csv('data/starbucks_seoul_all_store_info.csv'),
-            'reviews': pd.read_csv('data/cleaned_starbucks_reviews_with_counts.csv'),
-            'store_reviews': pd.read_csv('data/스타벅스_리뷰_500개.csv'),
-            'beverages': pd.read_csv('data/starbucks_nutrition_with_images.csv'),
-            '내향형': pd.read_csv('hexa_point_data/내향형_테마_키워드_매장별_Theme_score.csv'),
-            '외향형': pd.read_csv('hexa_point_data/외향형_테마_키워드_매장별_Theme_score.csv'),
-            '수다형': pd.read_csv('hexa_point_data/수다형_테마_키워드_매장별_Theme_score.csv'),
-            '카공형': pd.read_csv('hexa_point_data/카공형_테마_키워드_매장별_Theme_score.csv')
+            'stores': pd.read_csv('../data/starbucks_seoul_all_store_info.csv'),
+            'reviews': pd.read_csv('../data/cleaned_starbucks_reviews_with_counts.csv'),
+            'store_reviews': pd.read_csv('../data/스타벅스_리뷰_500개.csv'),
+            'beverages': pd.read_csv('../data/starbucks_nutrition_with_images.csv'),
+            '내향형': pd.read_csv('../hexa_point_data/내향형_테마_키워드_매장별_Theme_score.csv'),
+            '외향형': pd.read_csv('../hexa_point_data/외향형_테마_키워드_매장별_Theme_score.csv'),
+            '수다형': pd.read_csv('../hexa_point_data/수다형_테마_키워드_매장별_Theme_score.csv'),
+            '카공형': pd.read_csv('../hexa_point_data/카공형_테마_키워드_매장별_Theme_score.csv')
         }
         
         # 매장 데이터 전처리
         data['stores']['district'] = data['stores']['주소'].str.extract(r'서울특별시\s+(\S+구)')
         
         # 키워드 데이터 로드
-        with open('keyword_data/store_keywords.json', 'r', encoding='utf-8') as f:
+        with open('../keyword_data/store_keywords.json', 'r', encoding='utf-8') as f:
             data['store_keywords'] = json.load(f)
         
         return data
