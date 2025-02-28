@@ -445,7 +445,7 @@ st.markdown(
     /* ✅ 4. 메인 컨테이너 투명도 및 블러 효과 (.main) */
     .main {
         background-color: rgba(255, 255, 255, 0.35) !important; /* 배경색*/
-        backdrop-filter: blur(6px); /* 블러 효과 */
+        backdrop-filter: blur(3px); /* 블러 효과 */
         padding: 1rem; /* 내부 여백 */
         border-radius: 8px; /* 모서리 둥글게 */
     }
