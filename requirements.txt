@@ -1,5 +1,6 @@
 streamlit
 pandas
+numpy
 matplotlib
 folium
 streamlit-folium
@@ -7,6 +8,7 @@ requests
 plotly
 wordcloud
 pyvis
-numpy
 google-generativeai
-markdown
+google-auth
+protobuf
+Markdown
